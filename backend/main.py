@@ -2,10 +2,8 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from model import run_image_detection, load_model, run_text_detection, run_audio_detection
-import uvicorn
+from model import run_image_detection, load_model, run_text_detection, run_audio_detection, get_model, get_extractor
 from gradcam import generate_heatmap
-from model import get_model, get_extractor
 
 app = FastAPI(
     title="Hologram Truth Analyzer API",

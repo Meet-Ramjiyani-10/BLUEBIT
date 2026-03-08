@@ -1,10 +1,9 @@
 import torch
 import numpy as np
-from PIL import Image
+import cv2
 import io
 import base64
-import cv2
-
+from PIL import Image
 
 def generate_heatmap(image_bytes, model, extractor):
 
@@ -12,36 +11,40 @@ def generate_heatmap(image_bytes, model, extractor):
     image_np = np.array(image)
 
     inputs = extractor(images=image, return_tensors="pt")
-    input_tensor = inputs["pixel_values"]
-    input_tensor.requiresgrad(True)
 
-    outputs = model(pixel_values=input_tensor)
+    pixel_values = inputs["pixel_values"]
+    pixel_values.requires_grad = True
+
+    outputs = model(pixel_values=pixel_values)
     logits = outputs.logits
-    predicted_class = torch.argmax(logits)
+    pred_class = torch.argmax(logits)
 
     model.zero_grad()
-    logits[0, predicted_class].backward()
+    logits[0, pred_class].backward()
 
-    gradients = input_tensor.grad[0].detach().numpy()
+    grads = pixel_values.grad.detach().cpu().numpy()[0]
 
-    heatmap = np.mean(np.abs(gradients), axis=0)
+    # collapse channels
+    saliency = np.max(np.abs(grads), axis=0)
 
-    heatmap = heatmap / (heatmap.max() + 1e-8)
+    saliency = saliency - saliency.min()
+    saliency = saliency / (saliency.max() + 1e-8)
 
-    heatmap = cv2.resize(heatmap, (image_np.shape[1], image_np.shape[0]))
+    saliency = cv2.resize(saliency, (image_np.shape[1], image_np.shape[0]))
 
-    heatmap = np.uint8(255 * heatmap)
+    heatmap = np.uint8(255 * saliency)
+
     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
 
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
 
-    overlay = cv2.addWeighted(image_np, 0.6, heatmap, 0.4, 0)
+    overlay = cv2.addWeighted(image_np, 0.5, heatmap, 0.7, 0)
 
     overlay_pil = Image.fromarray(overlay)
 
     buffer = io.BytesIO()
     overlay_pil.save(buffer, format="PNG")
 
-    heatmap_base64 = base64.b64encode(buffer.getvalue()).decode()
+    base64_heatmap = base64.b64encode(buffer.getvalue()).decode()
 
-    return heatmap_base64
+    return base64_heatmap

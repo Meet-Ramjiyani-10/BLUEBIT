@@ -29,6 +29,12 @@ def load_model():
 
     print("All models loaded successfully!")
 
+def get_model():
+    return model
+
+def get_extractor():
+    return extractor
+
 def run_image_detection(image_bytes: bytes) -> dict:
 
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
