@@ -1,9 +1,9 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from model import run_image_detection, load_model, run_text_detection, run_audio_detection
 import uvicorn
-import io
-from model import run_image_detection
 
 app = FastAPI(
     title="Hologram Truth Analyzer API",
@@ -22,25 +22,34 @@ app.add_middleware(
 def health_check():
     return {"status": "running", "message": "Hologram Truth Analyzer is live"}
 
+from model import run_image_detection, load_model
+
+@app.on_event("startup")
+async def startup_event():
+    load_model()
+
 @app.post("/detect/image")
 async def detect_image(file: UploadFile = File(...)):
-    """
-    Accepts an image file and returns deepfake detection result
-    with confidence score and Grad-CAM heatmap.
-    """
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
-    
     contents = await file.read()
     result = run_image_detection(contents)
-    
     return JSONResponse({
-    "status": "success",
-    "filename": file.filename,
-    "prediction": result["prediction"],
-    "confidence": result["confidence"],
-    "heatmap": None
+        "status": "success",
+        "filename": file.filename,
+        "prediction": result["prediction"],
+        "confidence": result["confidence"],
+        "heatmap": None  # add GradCAM later
     })
+
+from pydantic import BaseModel
+
+class TextInput(BaseModel):
+    text: str
+
+@app.post("/detect/text")
+async def detect_text(input: TextInput):
+    from model import run_text_detection
+    result = run_text_detection(input.text)
+    return JSONResponse({"status": "success", **result})
 
 # @app.post("/detect/audio")
 # async def detect_audio(file: UploadFile = File(...)):
