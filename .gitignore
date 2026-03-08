@@ -1,0 +1,27 @@
+# # Python
+# __pycache__/
+# *.py[cod]
+# *.egg-info/
+# dist/
+# build/
+# .env
+# venv/
+# .venv/
+
+# # Models (too large for git)
+# models/*.pt
+# models/*.bin
+# models/*.pth
+
+# # Node
+# node_modules/
+# frontend/build/
+# .next/
+
+# # OS
+# .DS_Store
+# Thumbs.db
+
+# # IDE
+# .vscode/
+# .idea/
