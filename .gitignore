@@ -5,7 +5,7 @@
 # dist/
 # build/
 # .env
-# venv/
+venv
 # .venv/
 
 # # Models (too large for git)
