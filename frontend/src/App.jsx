@@ -179,19 +179,57 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
-  const handleAnalyze = () => {
-    setLoading(true);
-    setResult(null);
-    // Simulate API call
-    setTimeout(() => {
-      const isReal = Math.random() > 0.5;
-      setResult({
-        label: isReal ? 'REAL' : 'FAKE',
-        confidence: parseFloat((70 + Math.random() * 28).toFixed(1)),
+  const handleAnalyze = async () => {
+  setLoading(true);
+  setResult(null);
+
+  try {
+    let response;
+
+    if (activeTab === "image") {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      response = await fetch("http://127.0.0.1:8000/detect/image", {
+        method: "POST",
+        body: formData,
       });
-      setLoading(false);
-    }, 2200);
-  };
+    }
+
+    if (activeTab === "audio") {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      response = await fetch("http://127.0.0.1:8000/detect/audio", {
+        method: "POST",
+        body: formData,
+      });
+    }
+
+    if (activeTab === "text") {
+      response = await fetch("http://127.0.0.1:8000/detect/text", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text }),
+      });
+    }
+
+    const data = await response.json();
+
+    setResult({
+      label: data.prediction,
+      confidence: data.confidence,
+    });
+
+  } catch (error) {
+    console.error(error);
+    alert("Backend connection error");
+  }
+
+  setLoading(false);
+};
 
   const reset = () => {
     setFile(null);
