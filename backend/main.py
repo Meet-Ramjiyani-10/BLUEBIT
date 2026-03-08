@@ -32,9 +32,15 @@ async def startup_event():
 async def detect_image(file: UploadFile = File(...)):
     contents = await file.read()
     result = run_image_detection(contents)
-    model = get_model()
-    extractor = get_extractor()
-    heatmap = generate_heatmap(contents, model, extractor)	
+
+    heatmap = None
+    try:
+        m = get_model()
+        ext = get_extractor()
+        heatmap = generate_heatmap(contents, m, ext)
+    except Exception as e:
+        print(f"Heatmap generation failed: {e}")
+
     return JSONResponse({
         "status": "success",
         "filename": file.filename,

@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoFeatureExtractor, AutoModelForImageClassification, pipeline
+from transformers import AutoImageProcessor, AutoModelForImageClassification, pipeline
 from PIL import Image
 import io
 import cv2
@@ -23,7 +23,7 @@ def load_model():
     global extractor, model, text_classifier, audio_classifier
 
     print("Loading image deepfake model...")
-    extractor = AutoFeatureExtractor.from_pretrained(MODEL_NAME)
+    extractor = AutoImageProcessor.from_pretrained(MODEL_NAME)
     model = AutoModelForImageClassification.from_pretrained(MODEL_NAME)
     model.eval()
 
