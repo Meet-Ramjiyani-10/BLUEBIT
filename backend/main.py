@@ -51,24 +51,14 @@ async def detect_text(input: TextInput):
     result = run_text_detection(input.text)
     return JSONResponse({"status": "success", **result})
 
-# @app.post("/detect/audio")
-# async def detect_audio(file: UploadFile = File(...)):
-#     """
-#     Accepts an audio file and returns deepfake detection result.
-#     """
-#     if not file.content_type.startswith("audio/"):
-#         raise HTTPException(status_code=400, detail="File must be an audio file")
-    
-#     contents = await file.read()
-#     # TODO: Pass to model.py for audio inference
-#     # result = run_audio_detection(contents)
-    
-#     return JSONResponse({
-#         "status": "success",
-#         "filename": file.filename,
-#         "prediction": "pending",  # will be "REAL" or "FAKE"
-#         "confidence": 0.0,
-#     })
-
-# if __name__ == "__main__":
-#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+@app.post("/detect/audio")
+async def detect_audio(file: UploadFile = File(...)):
+    contents = await file.read()
+    from model import run_audio_detection
+    result = run_audio_detection(contents)
+    return JSONResponse({
+        "status": "success",
+        "filename": file.filename,
+        "prediction": result["prediction"],
+        "confidence": result["confidence"]
+    })

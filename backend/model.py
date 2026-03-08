@@ -55,16 +55,29 @@ def run_text_detection(text: str) -> dict:
         "prediction": "AI GENERATED" if result["label"] == "Fake" else "HUMAN WRITTEN",
         "confidence": round(result["score"] * 100, 2)
     }
-def run_audio_detection(audio_bytes: bytes):
-
-    import io
+def run_audio_detection(audio_bytes: bytes) -> dict:
+    import io, tempfile, os
+    # import librosa
     import soundfile as sf
 
-    audio_data, samplerate = sf.read(io.BytesIO(audio_bytes))
 
-    result = audio_classifier(audio_data)[0]
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+        f.write(audio_bytes)
+        tmp_path = f.name
+
+    try:
+        audio_data, samplerate = sf.read(tmp_path)
+
+        # convert stereo → mono
+        if len(audio_data.shape) > 1:
+            audio_data = audio_data.mean(axis=1)
+    finally:
+        os.unlink(tmp_path)
+
+    # Pass as dict — bypasses ffmpeg completely
+    result = audio_classifier({"array": audio_data, "sampling_rate": 16000})[0]
 
     return {
-        "prediction": "FAKE" if result["label"] == "fake" else "REAL",
+        "prediction": "FAKE" if result["label"].lower() == "fake" else "REAL",
         "confidence": round(result["score"] * 100, 2)
     }
