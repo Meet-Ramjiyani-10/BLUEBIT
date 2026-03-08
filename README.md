@@ -5,7 +5,7 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.2-orange)
+![PyTorch](https://img.shields.io/badge/PyTorch-3.1-orange)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110-green)
 ![React](https://img.shields.io/badge/React-18-61dafb)
 ![License](https://img.shields.io/badge/license-MIT-green)
