@@ -98,7 +98,7 @@ function ConfidenceBar({ value }) {
 }
 
 function ResultCard({ result, file, activeTab, onReset }) {
-  const isReal = result.label === 'REAL';
+  const isReal = result.label.includes("REAL");
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -110,9 +110,21 @@ function ResultCard({ result, file, activeTab, onReset }) {
           ) : (
             <XCircle size={56} className="text-red-500" />
           )}
+          <div className="flex items-center gap-3">
+          <span
+            className={`px-4 py-1 rounded-full text-sm font-semibold ${
+              isReal
+                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                : "bg-red-500/20 text-red-400 border border-red-500/30"
+            }`}
+          >
+            {isReal ? "LIKELY AUTHENTIC" : "LIKELY DEEPFAKE"}
+          </span>
+        </div>
+
           <span
             className={`text-4xl font-extrabold tracking-wider ${
-              isReal ? 'text-green-400' : 'text-red-500'
+              isReal ? "text-green-400" : "text-red-500"
             }`}
           >
             {result.label}
@@ -123,7 +135,7 @@ function ResultCard({ result, file, activeTab, onReset }) {
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-gray-400">
             <span>Confidence</span>
-            <span className="text-white font-semibold">{result.confidence}%</span>
+            <span className="text-blue-400 font-bold text-lg">{result.confidence}%</span>
           </div>
           <ConfidenceBar value={result.confidence} />
         </div>
