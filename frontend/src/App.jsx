@@ -158,11 +158,14 @@ function ResultCard({ result, file, activeTab, onReset }) {
                 Heatmap
               </p>
               <div className="rounded-lg w-full h-64 border border-gray-700 bg-gradient-to-br from-red-900/40 via-yellow-700/30 to-green-900/30 flex items-center justify-center relative overflow-hidden">
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt="heatmap"
-                  className="absolute inset-0 w-full h-full object-contain opacity-50"
-                />
+                
+                {result.heatmap && (
+                  <img
+                    src={`data:image/png;base64,${result.heatmap}`}
+                    alt="heatmap"
+                    className="absolute inset-0 w-full h-full object-contain opacity-80"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-br from-red-500/40 via-yellow-500/20 to-transparent mix-blend-overlay" />
                 <span className="text-[10px] text-gray-400 absolute bottom-2 right-2">
                   Grad-CAM++
