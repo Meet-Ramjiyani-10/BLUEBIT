@@ -4,7 +4,7 @@ uvicorn==0.29.0
 python-multipart==0.0.9
 
 # ML & Deep Learning
-torch==2.2.1
+torch>=2.2
 torchvision==0.17.1
 torchaudio==2.2.1
 transformers==4.39.3

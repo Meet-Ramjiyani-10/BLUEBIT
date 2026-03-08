@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from model import run_image_detection, load_model, run_text_detection, run_audio_detection
 import uvicorn
+from gradcam import generate_heatmap
+from model import get_model, get_extractor
 
 app = FastAPI(
     title="Hologram Truth Analyzer API",
@@ -32,12 +34,15 @@ async def startup_event():
 async def detect_image(file: UploadFile = File(...)):
     contents = await file.read()
     result = run_image_detection(contents)
+    model = get_model()
+    extractor = get_extractor()
+    heatmap = generate_heatmap(contents, model, extractor)	
     return JSONResponse({
         "status": "success",
         "filename": file.filename,
         "prediction": result["prediction"],
         "confidence": result["confidence"],
-        "heatmap": None  # add GradCAM later
+        "heatmap": heatmap
     })
 
 from pydantic import BaseModel
