@@ -9,12 +9,14 @@ import {
   CheckCircle2,
   XCircle,
   RotateCcw,
+  Video as VideoIcon,
 } from 'lucide-react';
 
 const TABS = [
   { id: 'image', label: 'Image', icon: ImageIcon, accept: 'image/*' },
   { id: 'audio', label: 'Audio', icon: Mic, accept: 'audio/*' },
   { id: 'text', label: 'Text', icon: Type },
+  { id: 'video', label: 'Video', icon: VideoIcon, accept: 'video/*' },
 ];
 
 function DropZone({ accept, file, onFile, loading }) {
@@ -165,6 +167,15 @@ function ResultCard({ result, file, activeTab, onReset }) {
           <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#64748b]" /> Framework: PyTorch</span>
         </div>
 
+        {/* Show frames info for video */}
+        {result.frames_analyzed && (
+          <div className="pt-2">
+            <p className="text-xs text-[#64748b] font-mono text-center">
+              ANALYZED {result.frames_analyzed} FRAMES_ · {result.fake_frames} SUSPICIOUS · {result.real_frames} AUTHENTIC
+            </p>
+          </div>
+        )}
+
         {/* Heatmap Section */}
         {activeTab === 'image' && file && (
           <div className="pt-6 border-t border-[#1e2433]">
@@ -264,6 +275,16 @@ function App() {
         });
       }
 
+      if (activeTab === "video") {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        response = await fetch("http://127.0.0.1:8000/detect/video", {
+          method: "POST",
+          body: formData,
+        });
+      }
+
       if (activeTab === "text") {
         response = await fetch("http://127.0.0.1:8000/detect/text", {
           method: "POST",
@@ -280,6 +301,9 @@ function App() {
         label: data.prediction,
         confidence: data.confidence,
         heatmap: data.heatmap ?? null,
+        frames_analyzed: data.frames_analyzed ?? null,
+        fake_frames: data.fake_frames ?? null,
+        real_frames: data.real_frames ?? null,
       });
 
     } catch (error) {
@@ -299,7 +323,7 @@ function App() {
 
   const canAnalyze =
     (activeTab === 'text' && text.trim().length > 0) ||
-    ((activeTab === 'image' || activeTab === 'audio') && file);
+    ((activeTab === 'image' || activeTab === 'audio' || activeTab === 'video') && file);
 
   const currentTab = TABS.find((t) => t.id === activeTab);
 
@@ -414,8 +438,8 @@ function App() {
                 disabled={!canAnalyze || loading}
                 onClick={handleAnalyze}
                 className={`w-full relative flex items-center justify-center gap-3 overflow-hidden rounded-sm py-3.5 text-sm tracking-widest font-bold uppercase transition-all duration-300 ${canAnalyze && !loading
-                    ? 'bg-[#2563EB] hover:bg-[#1d4ed8] text-white shadow-[0_0_20px_rgba(37,99,235,0.2)] cursor-pointer'
-                    : 'bg-[#1e2433] text-[#64748b] cursor-not-allowed'
+                  ? 'bg-[#2563EB] hover:bg-[#1d4ed8] text-white shadow-[0_0_20px_rgba(37,99,235,0.2)] cursor-pointer'
+                  : 'bg-[#1e2433] text-[#64748b] cursor-not-allowed'
                   }`}
               >
                 {loading ? (
