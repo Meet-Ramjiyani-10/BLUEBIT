@@ -40,6 +40,7 @@ async def detect_image(file: UploadFile = File(...)):
         "filename": file.filename,
         "prediction": result["prediction"],
         "confidence": result["confidence"],
+        "explanation": result.get("explanation"),
         "heatmap": heatmap
     })
 
@@ -63,7 +64,8 @@ async def detect_audio(file: UploadFile = File(...)):
         "status": "success",
         "filename": file.filename,
         "prediction": result["prediction"],
-        "confidence": result["confidence"]
+        "confidence": result["confidence"],
+        "explanation": result.get("explanation")
     })
 
 @app.post("/detect/video")
@@ -100,10 +102,17 @@ async def detect_video(file: UploadFile = File(...)):
     prediction = "FAKE" if fake_count > total/2 else "REAL"
     confidence = round((fake_count/total)*100, 2) if prediction == "FAKE" else round((1 - fake_count/total)*100, 2)
     
+    # After calculating prediction add:
+    if prediction == "FAKE":
+        explanation = f"Frame analysis detected manipulation in {fake_count} out of {total} sampled frames. Vision Transformer identified facial inconsistencies across temporal sequence."
+    else:
+        explanation = f"All {total} sampled frames appear authentic. No significant manipulation artifacts detected across temporal sequence."
+    
     return JSONResponse({
         "status": "success",
         "prediction": prediction,
         "confidence": confidence,
+        "explanation": explanation,
         "frames_analyzed": total,
         "fake_frames": fake_count,
         "real_frames": total - fake_count

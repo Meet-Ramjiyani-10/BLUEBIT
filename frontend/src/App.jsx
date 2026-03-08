@@ -10,13 +10,16 @@ import {
   XCircle,
   RotateCcw,
   Video as VideoIcon,
+  Cpu,
+  FileSearch,
+  Activity
 } from 'lucide-react';
 
 const TABS = [
   { id: 'image', label: 'Image', icon: ImageIcon, accept: 'image/*' },
   { id: 'audio', label: 'Audio', icon: Mic, accept: 'audio/*' },
-  { id: 'text', label: 'Text', icon: Type },
   { id: 'video', label: 'Video', icon: VideoIcon, accept: 'video/*' },
+  { id: 'text', label: 'Text', icon: Type },
 ];
 
 function DropZone({ accept, file, onFile, loading }) {
@@ -35,18 +38,33 @@ function DropZone({ accept, file, onFile, loading }) {
   );
 
   const preview = file ? (
-    accept.startsWith('image') ? (
-      <img
-        src={URL.createObjectURL(file)}
-        alt="preview"
-        className="max-h-56 rounded border border-[#1e2433] object-contain relative z-10"
-      />
+    accept.startsWith('image') || accept.startsWith('video') ? (
+      <div className="relative z-10 w-full flex flex-col items-center">
+        {accept.startsWith('video') ? (
+          <div className="w-full max-w-sm aspect-video bg-[#04040a] border border-[#1a1f2e] flex items-center justify-center">
+            <VideoIcon size={32} className="text-[#2563eb] opacity-80" />
+          </div>
+        ) : (
+          <img
+            src={URL.createObjectURL(file)}
+            alt="preview"
+            className="max-h-56 rounded-sm border border-[#1a1f2e] object-contain shadow-2xl"
+          />
+        )}
+        <div className="mt-4 flex items-center gap-3 bg-[#04040a] border border-[#1a1f2e] px-4 py-2 rounded-sm text-[#f8fafc]">
+          <span className="font-mono text-sm max-w-[200px] truncate">{file.name}</span>
+          <span className="font-mono text-xs text-[#64748b]">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+          <span className="px-2 py-0.5 bg-[#2563eb]/20 text-[#2563eb] uppercase font-mono text-[10px] tracking-widest">{accept.split('/')[0]}</span>
+          <CheckCircle2 size={16} className="text-[#16a34a]" />
+        </div>
+      </div>
     ) : (
-      <div className="flex flex-col items-center gap-3 text-gray-300 relative z-10">
-        <Mic size={32} className="text-[#2563EB]" />
-        <span className="truncate max-w-xs font-mono text-sm">{file.name}</span>
-        <span className="text-xs text-gray-500 font-mono">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-        <CheckCircle2 size={20} className="text-[#22c55e] mt-2" />
+      <div className="flex flex-col items-center gap-4 relative z-10 bg-[#04040a] border border-[#1a1f2e] px-8 py-6 rounded-sm">
+        <Mic size={32} className="text-[#2563eb]" />
+        <span className="truncate max-w-xs font-mono text-sm text-[#f8fafc]">{file.name}</span>
+        <span className="text-xs text-[#64748b] font-mono">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+        <span className="px-2 py-0.5 bg-[#2563eb]/20 text-[#2563eb] uppercase font-mono text-[10px] tracking-widest">AUDIO</span>
+        <CheckCircle2 size={20} className="text-[#16a34a] mt-2" />
       </div>
     )
   ) : null;
@@ -60,37 +78,33 @@ function DropZone({ accept, file, onFile, loading }) {
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
       onClick={() => { if (!loading) inputRef.current?.click(); }}
-      className={`relative flex justify-center items-center min-h-[280px] w-full p-8 transition-all duration-300 overflow-hidden ${loading ? 'cursor-default opacity-80' : 'cursor-pointer hover:bg-[#0f1117]'
+      className={`relative flex justify-center items-center min-h-[280px] w-full p-8 transition-colors duration-200 overflow-hidden bg-[#0c0e16] ${loading ? 'cursor-default opacity-50' : 'cursor-pointer hover:bg-[#111420]'
         }`}
     >
       {/* Target Corner Brackets */}
-      <div className={`absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 ${dragOver ? 'border-[#2563EB]' : 'border-[#1e2433]'} transition-colors duration-300`} />
-      <div className={`absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 ${dragOver ? 'border-[#2563EB]' : 'border-[#1e2433]'} transition-colors duration-300`} />
-      <div className={`absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 ${dragOver ? 'border-[#2563EB]' : 'border-[#1e2433]'} transition-colors duration-300`} />
-      <div className={`absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 ${dragOver ? 'border-[#2563EB]' : 'border-[#1e2433]'} transition-colors duration-300`} />
-
-      {/* Dotted border wrapper */}
-      <div className={`absolute inset-4 border border-dashed rounded-sm transition-colors duration-300 z-0 ${dragOver ? 'border-[#2563EB] bg-[#2563EB]/5' : file ? 'border-[#1e2433]' : 'border-[#1e2433]'
-        }`} />
+      <div className={`absolute top-0 left-0 w-6 h-6 border-t border-l ${dragOver ? 'border-[#2563eb]' : 'border-[#1a1f2e]'}`} />
+      <div className={`absolute top-0 right-0 w-6 h-6 border-t border-r ${dragOver ? 'border-[#2563eb]' : 'border-[#1a1f2e]'}`} />
+      <div className={`absolute bottom-0 left-0 w-6 h-6 border-b border-l ${dragOver ? 'border-[#2563eb]' : 'border-[#1a1f2e]'}`} />
+      <div className={`absolute bottom-0 right-0 w-6 h-6 border-b border-r ${dragOver ? 'border-[#2563eb]' : 'border-[#1a1f2e]'}`} />
 
       {/* Scanner Animation */}
       {loading && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-[#2563EB] shadow-[0_0_20px_#2563EB] animate-[scan_2s_ease-in-out_infinite] z-20" />
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-[#2563eb] shadow-[0_4px_20px_#2563eb] animate-[scan_2s_linear_infinite] z-20" />
       )}
 
       {file ? (
-        <div className="relative z-10 flex flex-col items-center">
+        <div className="relative z-10 flex flex-col items-center w-full">
           {preview}
         </div>
       ) : (
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <Upload size={36} className={`${dragOver ? 'text-[#2563EB]' : 'text-[#64748b]'} transition-colors`} />
-          <div className="text-center space-y-1">
-            <p className="text-sm text-[#f1f5f9] font-medium tracking-wide">
-              {dragOver ? "Drop to analyze" : "Click or drag file to analyze"}
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <Upload size={32} className={`${dragOver ? 'text-[#2563eb]' : 'text-[#64748b]'}`} />
+          <div className="text-center">
+            <p className="text-[#f8fafc] text-sm">
+              {dragOver ? "Drop to scan" : "Drop file to scan"}
             </p>
-            <p className="text-xs text-[#64748b] font-mono">
-              AWAITING INPUT...
+            <p className="text-xs text-[#64748b] mt-1">
+              or click to browse
             </p>
           </div>
         </div>
@@ -110,18 +124,18 @@ function DropZone({ accept, file, onFile, loading }) {
 }
 
 function SegmentedConfidenceBar({ value, isReal }) {
-  const segments = 20;
+  const segments = 10;
   const activeSegments = Math.round((value / 100) * segments);
-  const color = isReal ? "bg-[#22c55e]" : "bg-[#ef4444]";
-  const dimColor = isReal ? "bg-[#22c55e]/10" : "bg-[#ef4444]/10";
+  // Red for FAKE, Green for REAL
+  const color = isReal ? "bg-[#16a34a]" : "bg-[#dc2626]";
+  const dimColor = "bg-[#1a1f2e]";
 
   return (
-    <div className="flex items-center gap-[2px] w-full h-3">
+    <div className="flex items-center gap-1 w-full h-8">
       {Array.from({ length: segments }).map((_, i) => (
         <div
           key={i}
-          className={`flex-1 h-full rounded-[1px] ${i < activeSegments ? color + " shadow-[0_0_8px_" + (isReal ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.4)") + "]" : dimColor
-            }`}
+          className={`flex-1 h-full rounded-sm ${i < activeSegments ? color : dimColor}`}
         />
       ))}
     </div>
@@ -132,110 +146,177 @@ function ResultCard({ result, file, activeTab, onReset }) {
   const isReal = result.label.includes("REAL") || result.label.includes("HUMAN");
 
   return (
-    <div className="space-y-6 animate-fade-in w-full">
-      <div className={`relative rounded-sm border p-8 space-y-8 bg-[#0f1117] overflow-hidden ${isReal ? "border-l-4 border-[#1e2433] border-l-[#22c55e] shadow-[inset_4px_0_20px_-10px_rgba(34,197,94,0.3)]" : "border-l-4 border-[#1e2433] border-l-[#ef4444] shadow-[inset_4px_0_20px_-10px_rgba(239,68,68,0.3)]"
-        }`}>
+    <div className="animate-fade-in-up w-full flex flex-col mt-6">
+      <div className="relative bg-[#0c0e16] border border-[#1a1f2e] rounded-sm overflow-hidden flex flex-col shadow-2xl">
+        {/* Top thin colored bar */}
+        <div className={`h-1 w-full ${isReal ? 'bg-[#16a34a]' : 'bg-[#dc2626]'}`} />
 
-        {/* Verdict Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className={`p-4 rounded-sm ${isReal ? "bg-[#22c55e]/10 text-[#22c55e]" : "bg-[#ef4444]/10 text-[#ef4444]"}`}>
-              {isReal ? <CheckCircle2 size={40} /> : <XCircle size={40} />}
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] text-[#64748b] tracking-widest uppercase font-bold">Analysis Verdict</span>
-              <h2 className={`font-mono text-3xl font-bold tracking-tight ${isReal ? "text-[#22c55e]" : "text-[#ef4444]"}`}>
+        <div className="p-8 space-y-8">
+          {/* Verdict Row */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-[#1a1f2e] pb-6">
+            <div className="space-y-2">
+              <span className={`font-mono text-5xl font-bold tracking-tight ${isReal ? "text-[#16a34a]" : "text-[#dc2626]"}`}>
                 {result.label}
-              </h2>
+              </span>
+              <div className="text-[11px] text-[#94a3b8] font-mono tracking-widest uppercase flex flex-col gap-1">
+                <span>Model · ViT-Base</span>
+                <span>Processed in &lt;2s</span>
+                <span>Framework: PyTorch</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-4 min-w-[200px]">
+              <span className={`px-3 py-1 text-[10px] uppercase font-mono tracking-widest border border-[#1a1f2e] bg-[#04040a] ${isReal ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+                {isReal ? 'AUTHENTIC' : 'HIGH RISK'}
+              </span>
             </div>
           </div>
 
-          {/* Confidence Display */}
-          <div className="w-full sm:w-48 space-y-2">
-            <div className="flex justify-between items-baseline font-mono text-sm">
-              <span className="text-[#64748b]">CONFIDENCE</span>
-              <span className="text-[#f1f5f9] font-bold">{result.confidence.toFixed(1)}%</span>
+          {/* Confidence Row */}
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between items-center text-xs font-mono">
+              <span className="text-[#64748b] uppercase tracking-widest">CONFIDENCE SCORE</span>
+              <span className="text-[#2563eb] font-bold text-lg">{result.confidence.toFixed(1)}%</span>
             </div>
             <SegmentedConfidenceBar value={result.confidence} isReal={isReal} />
           </div>
-        </div>
 
-        {/* Technical Metadata */}
-        <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono text-[#64748b] border-t border-[#1e2433] pt-4">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#64748b]" /> Model: ViT-based</span>
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#64748b]" /> Processing: &lt;2s</span>
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#64748b]" /> Framework: PyTorch</span>
-        </div>
+          {/* Explanation line */}
+          {result.explanation && (
+            <div style={{
+              marginTop: "12px",
+              padding: "10px 14px",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid #1E293B",
+              borderLeft: `3px solid ${isReal ? "#22C55E" : "#EF4444"}`,
+              borderRadius: "4px",
+            }}>
+              <p style={{
+                fontFamily: "monospace",
+                fontSize: "12px",
+                color: "#94A3B8",
+                margin: 0,
+                lineHeight: "1.6"
+              }}>
+                <span style={{ color: isReal ? "#22C55E" : "#EF4444", marginRight: "8px" }}>
+                  {isReal ? "✓" : "⚠"}
+                </span>
+                {result.explanation}
+              </p>
+            </div>
+          )}
 
-        {/* Show frames info for video */}
-        {result.frames_analyzed && (
-          <div className="pt-2">
-            <p className="text-xs text-[#64748b] font-mono text-center">
-              ANALYZED {result.frames_analyzed} FRAMES_ · {result.fake_frames} SUSPICIOUS · {result.real_frames} AUTHENTIC
-            </p>
-          </div>
-        )}
-
-        {/* Heatmap Section */}
-        {activeTab === 'image' && file && (
-          <div className="pt-6 border-t border-[#1e2433]">
-            <h3 className="text-xs text-[#a1a1aa] uppercase tracking-widest font-bold mb-4">Forensic Analysis</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#64748b] font-mono tracking-wider ml-1">ORIGINAL_MEDIA</span>
-                <div className="bg-[#050505] border border-[#1e2433] rounded-sm p-1">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt="original"
-                    className="w-full object-contain max-h-[300px] border border-[#1e2433]/50"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <span className="text-[10px] text-[#64748b] font-mono tracking-wider ml-1">GRAD-CAM++_OVERLAY</span>
-                <div className="bg-[#050505] border border-[#1e2433] rounded-sm p-1">
-                  {result.heatmap ? (
-                    <div className="flex flex-col w-full">
-                      <img
-                        src={`data:image/png;base64,${result.heatmap}`}
-                        alt="heatmap"
-                        className="w-full object-contain max-h-[300px] border border-[#1e2433]/50"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-[200px] flex items-center justify-center font-mono text-xs text-[#64748b]">
-                      GENERATING_ANALYSIS...
-                    </div>
-                  )}
-                </div>
+          {/* Frame Analysis for Video */}
+          {activeTab === 'video' && result.frames_analyzed && (
+            <div className="bg-[#04040a] border border-[#1a1f2e] p-4 flex items-center justify-between">
+              <span className="text-[#64748b] text-[10px] font-mono uppercase tracking-widest">FRAME ANALYSIS</span>
+              <div className="text-[#94a3b8] text-[11px] font-mono space-x-3">
+                <span>{result.frames_analyzed} frames analyzed</span>
+                <span className="text-[#dc2626]">{result.fake_frames} fake</span>
+                <span className="text-[#16a34a]">{result.real_frames} real</span>
               </div>
             </div>
+          )}
 
-            {result.heatmap && (
-              <div className="mt-6 flex flex-col md:flex-row items-start md:items-center gap-6 p-4 rounded-sm bg-[#050505] border border-[#1e2433]">
-                <div className="flex-grow w-full md:w-auto">
-                  <div className="h-2 w-full rounded-sm bg-gradient-to-r from-blue-600 via-green-500 via-yellow-500 to-red-600" />
-                  <div className="flex justify-between text-[10px] text-[#64748b] mt-2 font-mono tracking-wide">
-                    <span>AUTHENTIC_REGION</span>
-                    <span>SUSPICIOUS_REGION</span>
+          {/* Voice Pattern / Audio */}
+          {activeTab === 'audio' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-[#f8fafc] border-b border-[#1a1f2e] pb-2">
+                <Activity size={16} className="text-[#64748b]" />
+                <h3 className="text-[11px] uppercase tracking-widest font-mono">VOICE PATTERN ANALYSIS</h3>
+              </div>
+              <div className="h-24 w-full bg-[#04040a] border border-[#1a1f2e] flex items-center justify-center overflow-hidden gap-[1px]">
+                {/* Fake waveform placeholder */}
+                {Array.from({ length: 60 }).map((_, i) => (
+                  <div key={i} className={`w-1 bg-[#2563eb]/40 rounded-sm`} style={{ height: `${Math.max(10, Math.random() * 80)}%` }} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Text Analysis Placeholder */}
+          {activeTab === 'text' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-[#f8fafc] border-b border-[#1a1f2e] pb-2">
+                <FileSearch size={16} className="text-[#64748b]" />
+                <h3 className="text-[11px] uppercase tracking-widest font-mono">TEXTUAL ARTIFACTS</h3>
+              </div>
+              <div className="p-4 bg-[#04040a] border border-[#1a1f2e] text-[#16a34a] text-sm font-mono whitespace-pre-wrap leading-relaxed">
+                Analysis complete. No structural anomalies detected in text buffer.
+              </div>
+            </div>
+          )}
+
+          {/* Heatmap Section */}
+          {(activeTab === 'image' || activeTab === 'video') && file && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-[#f8fafc] border-b border-[#1a1f2e] pb-2">
+                <FileSearch size={16} className="text-[#64748b]" />
+                <h3 className="text-[11px] uppercase tracking-widest font-mono">FORENSIC ANALYSIS</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <div className="bg-[#04040a] border border-[#1a1f2e] rounded-sm p-1 aspect-square sm:aspect-auto sm:h-64 flex items-center justify-center overflow-hidden">
+                    {activeTab === 'image' ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="original"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <VideoIcon size={48} className="text-[#1a1f2e]" />
+                    )}
                   </div>
+                  <span className="text-[10px] text-[#64748b] font-mono text-center tracking-widest uppercase">Original Signal</span>
                 </div>
-                <div className="md:max-w-xs text-[11px] text-[#64748b] leading-relaxed font-mono">
-                  <span className="text-[#f1f5f9]">Analysis parameters:</span> Warm regions denote spatial features heavily weighted by the model towards manipulation class. Cool regions align with authentic source data distribution.
+
+                <div className="flex flex-col gap-2">
+                  <div className="bg-[#04040a] border border-[#1a1f2e] rounded-sm p-1 aspect-square sm:aspect-auto sm:h-64 flex items-center justify-center overflow-hidden">
+                    {result.heatmap ? (
+                      <div className="w-full h-full flex items-center justify-center relative">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="base"
+                          className="w-full h-full object-contain absolute opacity-40 grayscale"
+                        />
+                        <img
+                          src={`data:image/png;base64,${result.heatmap}`}
+                          alt="heatmap"
+                          className="w-full h-full object-contain absolute mix-blend-screen"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-[#64748b] font-mono tracking-widest uppercase">No mapping available</div>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-[#64748b] font-mono text-center tracking-widest uppercase">Grad-CAM++ Overlay</span>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+
+              {result.heatmap && (
+                <div className="flex flex-col gap-2 pt-2">
+                  <div className="h-1 w-full rounded-sm bg-gradient-to-r from-blue-600 via-green-500 via-yellow-500 to-red-600" />
+                  <div className="flex justify-between text-[9px] text-[#94a3b8] font-mono tracking-widest uppercase">
+                    <span>AUTHENTIC</span>
+                    <span>SUSPICIOUS</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Explanation Box */}
+              <div className="bg-[#04040a] border border-[#1a1f2e] p-4 text-[#94a3b8] font-mono text-[11px] leading-relaxed">
+                <span className="text-[#dc2626] font-bold">RED REGIONS:</span> Heavily weighted spatial features triggering manipulation classification. High probability of synthetic alteration or GAN-generated artifacts.
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <button
         onClick={onReset}
-        className="w-full sm:w-auto mx-auto flex justify-center items-center gap-2 rounded-sm border border-[#1e2433] bg-[#0f1117] px-6 py-3 text-xs font-mono text-[#f1f5f9] hover:bg-[#1e2433] transition-colors cursor-pointer"
+        className="mt-6 w-full md:w-auto mx-auto border border-[#1a1f2e] bg-transparent text-[#94a3b8] px-8 py-3 text-xs font-mono uppercase tracking-widest hover:bg-[#0c0e16] hover:text-[#f8fafc] transition-colors"
       >
-        <RotateCcw size={14} />
-        INITIALIZE_NEW_SCAN
+        ANALYZE ANOTHER SAMPLE
       </button>
     </div>
   );
@@ -301,6 +382,7 @@ function App() {
         label: data.prediction,
         confidence: data.confidence,
         heatmap: data.heatmap ?? null,
+        explanation: data.explanation ?? null,
         frames_analyzed: data.frames_analyzed ?? null,
         fake_frames: data.fake_frames ?? null,
         real_frames: data.real_frames ?? null,
@@ -328,101 +410,144 @@ function App() {
   const currentTab = TABS.find((t) => t.id === activeTab);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#f1f5f9] font-sans selection:bg-[#2563EB] selection:text-white">
-      {/* Background styling for scanner effect */}
+    <div className="min-h-screen bg-[#04040a] text-[#f8fafc] font-sans selection:bg-[#2563eb] selection:text-white pb-24">
       <style dangerouslySetInnerHTML={{
         __html: `
+        :root {
+          color-scheme: dark;
+        }
         @keyframes scan {
           0% { transform: translateY(0); opacity: 0; }
           10% { opacity: 1; }
           90% { opacity: 1; }
           100% { transform: translateY(280px); opacity: 0; }
         }
+        @keyframes fade-in-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.4s ease-out forwards;
+        }
       `}} />
 
-      {/* Navbar - Glassmorphism, subtle border */}
-      <nav className="relative z-10 border-b border-[#1e2433] bg-[#050505]/80 backdrop-blur-md sticky top-0">
-        <div className="mx-auto max-w-5xl flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Shield size={24} className="text-[#f1f5f9]" />
-            <div>
-              <h1 className="text-base font-bold tracking-tight text-[#f1f5f9]">
-                Hologram Truth Analyzer
-              </h1>
-              <p className="text-[10px] text-[#64748b] tracking-widest uppercase font-semibold">
-                Multi-Modal Deepfake Detection
-              </p>
-            </div>
+      {/* NAVBAR */}
+      <nav className="fixed w-full z-50 h-[56px] border-b border-[#1a1f2e] bg-[rgba(5,5,10,0.95)] backdrop-blur px-6 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <Shield size={16} className="text-[#2563eb]" />
+          <div className="flex flex-col justify-center">
+            <span className="text-sm font-semibold tracking-tight leading-tight">Hologram Truth Analyzer</span>
+            <span className="text-[9px] uppercase tracking-[0.15em] text-[#64748b] leading-tight">MULTI-MODAL DEEPFAKE DETECTION</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#22c55e]"></span>
-            </div>
-            <span className="hidden sm:block text-[11px] font-mono text-[#64748b]">SYSTEM ONLINE</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative flex h-1.5 w-1.5 align-middle">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16a34a] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#16a34a]"></span>
           </div>
+          <span className="text-[10px] font-mono text-[#16a34a] tracking-widest">SYSTEM ONLINE</span>
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className="relative z-10 mx-auto max-w-4xl px-4 py-12 space-y-10">
+      {/* MAIN LAYOUT */}
+      <main className="pt-[100px] px-4 mx-auto max-w-4xl space-y-12">
 
-        {/* Minimal Hero Section */}
+        {/* HERO */}
         {!result && (
-          <div className="text-center">
-            <h2 className="text-[#a1a1aa] text-sm tracking-wide">
-              Detect AI-manipulated media with highest forensic confidence
-            </h2>
+          <div className="flex flex-col items-center text-center space-y-5">
+            <div className="flex items-center gap-2 border border-[#1a1f2e] bg-[#0c0e16] px-3 py-1.5 rounded-full">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb] animate-pulse" />
+              <span className="text-[10px] font-mono tracking-widest text-[#94a3b8] uppercase">4-Modal Detection System</span>
+            </div>
+
+            <h1 className="text-4xl md:text-5xl font-[800] tracking-tight text-white m-0">
+              Unmask Synthetic Media
+            </h1>
+
+            <p className="text-sm text-[#64748b] max-w-2xl font-medium tracking-wide">
+              Forensic-grade detection across image, audio, video and text — powered by Vision Transformers, wav2vec 2.0 and RoBERTa
+            </p>
+
+            {/* Stat Pills */}
+            <div className="flex flex-wrap justify-center gap-2 mt-4">
+              {['High Accuracy', '4 Modalities', 'Grad-CAM++ XAI'].map(stat => (
+                <span key={stat} className="px-3 py-1 text-xs border border-[#1a1f2e] bg-[#0c0e16] text-[#64748b] rounded-full flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-[#64748b]"></span> {stat}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Tab Switcher - Pill Shaped */}
-        <div className="mx-auto max-w-md flex justify-center gap-2">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  if (!loading) {
-                    setActiveTab(tab.id);
-                    reset();
-                  }
-                }}
-                className={`relative px-5 py-2 text-sm font-medium transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${active ? "text-white" : "text-[#64748b] hover:text-[#f1f5f9]"
-                  }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon size={16} />
-                  <span>{tab.label}</span>
-                </div>
-                {active && (
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2563EB] rounded-t-full shadow-[0_-2px_8px_rgba(37,99,235,0.4)]" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* HOW IT WORKS */}
+        {!result && (
+          <div className="hidden md:flex items-stretch justify-between gap-4 py-8 relative">
+            <div className="absolute top-[60px] left-[15%] right-[15%] h-[1px] border-t border-dashed border-[#1a1f2e] -z-10" />
 
-        {/* Dynamic Workspace */}
-        <div className="mx-auto max-w-2xl w-full transition-all">
+            <div className="flex-1 flex flex-col items-center text-center gap-3 bg-[#0c0e16] border border-[#1a1f2e] p-5 relative">
+              <span className="absolute -top-2 -left-2 w-5 h-5 bg-[#2563eb] text-white text-[10px] font-mono flex items-center justify-center rounded-sm">01</span>
+              <Upload size={20} className="text-[#64748b]" />
+              <h4 className="text-xs font-bold tracking-widest uppercase text-[#f8fafc]">Submit Media</h4>
+              <p className="text-[11px] text-[#64748b] leading-relaxed">Drop any image, audio clip, video or paste text</p>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center text-center gap-3 bg-[#0c0e16] border border-[#1a1f2e] p-5 relative">
+              <span className="absolute -top-2 -left-2 w-5 h-5 bg-[#2563eb] text-white text-[10px] font-mono flex items-center justify-center rounded-sm">02</span>
+              <Cpu size={20} className="text-[#64748b]" />
+              <h4 className="text-xs font-bold tracking-widest uppercase text-[#f8fafc]">Neural Analysis</h4>
+              <p className="text-[11px] text-[#64748b] leading-relaxed">3 specialized AI models analyze for manipulation artifacts</p>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center text-center gap-3 bg-[#0c0e16] border border-[#1a1f2e] p-5 relative">
+              <span className="absolute -top-2 -left-2 w-5 h-5 bg-[#2563eb] text-white text-[10px] font-mono flex items-center justify-center rounded-sm">03</span>
+              <FileSearch size={20} className="text-[#64748b]" />
+              <h4 className="text-xs font-bold tracking-widest uppercase text-[#f8fafc]">Forensic Report</h4>
+              <p className="text-[11px] text-[#64748b] leading-relaxed">Receive verdict, confidence score and visual heatmap evidence</p>
+            </div>
+          </div>
+        )}
+
+        {/* WORKSPACE AREA */}
+        <div className="mx-auto max-w-3xl w-full">
           {!result ? (
-            <div className="space-y-6">
+            <div className="flex flex-col border border-[#1a1f2e] bg-[#0c0e16] shadow-xl rounded-sm overflow-hidden">
 
-              {/* Input Area */}
-              <div className="bg-[#0f1117] border border-[#1e2433] rounded-sm relative overflow-hidden">
+              {/* TABS */}
+              <div className="flex w-full border-b border-[#1a1f2e]">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        if (!loading) {
+                          setActiveTab(tab.id);
+                          reset();
+                        }
+                      }}
+                      className={`flex-1 relative h-14 flex items-center justify-center gap-2 text-[11px] font-mono uppercase tracking-[0.15em] transition-colors bg-transparent ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#111420]'} ${active ? "text-[#f8fafc]" : "text-[#64748b]"}`}
+                    >
+                      <Icon size={14} />
+                      {tab.label}
+                      {active && (
+                        <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#2563eb]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* UPLOAD / INPUT */}
+              <div className="w-full relative min-h-[280px]">
                 {activeTab === 'text' ? (
-                  <div className="p-1">
-                    <textarea
-                      rows={10}
-                      value={text}
-                      disabled={loading}
-                      onChange={(e) => setText(e.target.value)}
-                      placeholder="Paste suspicious text buffer here for analysis..."
-                      className="w-full bg-[#050505] p-6 text-[#f1f5f9] placeholder:text-[#334155] focus:outline-none focus:ring-1 focus:ring-[#2563EB] resize-none text-sm font-mono transition-shadow border border-[#1e2433]"
-                    />
-                  </div>
+                  <textarea
+                    value={text}
+                    disabled={loading}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Paste text buffer for NLP analysis..."
+                    className="w-full h-[280px] bg-[#04040a] p-6 text-[#94a3b8] placeholder:text-[#334155] focus:outline-none focus:ring-opacity-0 resize-none text-sm font-mono border-none"
+                  />
                 ) : (
                   <DropZone
                     accept={currentTab.accept}
@@ -433,26 +558,24 @@ function App() {
                 )}
               </div>
 
-              {/* Analysis Button */}
+              {/* EXECUTE BUTTON */}
               <button
                 disabled={!canAnalyze || loading}
                 onClick={handleAnalyze}
-                className={`w-full relative flex items-center justify-center gap-3 overflow-hidden rounded-sm py-3.5 text-sm tracking-widest font-bold uppercase transition-all duration-300 ${canAnalyze && !loading
-                  ? 'bg-[#2563EB] hover:bg-[#1d4ed8] text-white shadow-[0_0_20px_rgba(37,99,235,0.2)] cursor-pointer'
-                  : 'bg-[#1e2433] text-[#64748b] cursor-not-allowed'
-                  }`}
+                className={`w-full h-12 flex items-center justify-center font-mono text-[11px] tracking-[0.2em] uppercase transition-colors ${canAnalyze && !loading ? 'bg-[#1d4ed8] text-[#f8fafc] hover:bg-[#2563eb] cursor-pointer' : 'bg-[#1a1f2e] text-[#64748b] cursor-not-allowed'}`}
               >
                 {loading ? (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] animate-[shimmer_1.5s_infinite]" />
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Analyzing via <span className="font-mono">{activeTab === 'image' ? 'Vision Transformer' : activeTab === 'audio' ? 'wav2vec 2.0' : 'RoBERTa'}...</span></span>
-                  </>
+                  <span className="flex items-center gap-2 text-white">
+                    SCANNING · {activeTab === 'image' ? 'VISION TRANSFORMER' : activeTab === 'audio' ? 'WAV2VEC 2.0' : activeTab === 'video' ? 'VIDEO PROCESSING' : 'ROBERTA'} ACTIVE
+                    <span className="flex h-1.5 w-1.5 relative ml-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                    </span>
+                  </span>
                 ) : (
-                  <span>Execute Analysis</span>
+                  "EXECUTE ANALYSIS"
                 )}
               </button>
-
             </div>
           ) : (
             <ResultCard
@@ -464,20 +587,14 @@ function App() {
           )}
         </div>
 
-        {/* Minimal Footer */}
-        <footer className="pt-20 pb-8 text-center">
-          <p className="text-[10px] text-[#64748b]/60 font-mono tracking-widest">
-            POWERED BY VISION TRANSFORMERS · WAV2VEC 2.0 · ROBERTA · TEAM TRUTHGUARDIANS
-          </p>
-        </footer>
       </main>
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}} />
+      {/* FOOTER */}
+      <footer className="fixed bottom-0 w-full bg-[#04040a] border-t border-[#1a1f2e] py-4 text-center z-40">
+        <p className="text-[10px] text-[#64748b] font-mono tracking-[0.15em] uppercase">
+          TruthGuardians · BlueBit Hackathon 4.0 · Vision Transformers · wav2vec 2.0 · RoBERTa · Grad-CAM++
+        </p>
+      </footer>
     </div>
   );
 }
