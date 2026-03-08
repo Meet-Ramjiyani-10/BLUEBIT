@@ -12,15 +12,20 @@ def generate_heatmap(image_bytes, model, extractor):
 
     inputs = extractor(images=image, return_tensors="pt")
 
-    pixel_values = inputs["pixel_values"]
-    pixel_values.requires_grad = True
+    # Create a fresh leaf tensor so gradients always flow back
+    pixel_values = inputs["pixel_values"].clone().detach().requires_grad_(True)
 
-    outputs = model(pixel_values=pixel_values)
-    logits = outputs.logits
-    pred_class = torch.argmax(logits)
+    with torch.enable_grad():
+        outputs = model(pixel_values=pixel_values)
+        logits = outputs.logits
+        pred_class = torch.argmax(logits)
 
-    model.zero_grad()
-    logits[0, pred_class].backward()
+        model.zero_grad()
+        logits[0, pred_class].backward()
+
+    if pixel_values.grad is None:
+        print("WARNING: pixel_values.grad is None — no heatmap generated")
+        return None
 
     grads = pixel_values.grad.detach().cpu().numpy()[0]
 
