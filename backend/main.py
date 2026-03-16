@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+
 from model import (
     run_image_detection,
     load_model,
@@ -12,7 +13,12 @@ from model import (
     get_extractor
 )
 
-from gradcam import generate_heatmap, detect_partial_manipulation
+# from gradcam import generate_heatmap, detect_partial_manipulation
+# CHANGE THIS
+# from gradcam import generate_heatmap, detect_partial_manipulation
+
+# TO THIS
+from gradcam import generate_heatmap
 from provenance_signature import file_hash
 from provenance_metadata import extract_metadata, simplify_metadata
 

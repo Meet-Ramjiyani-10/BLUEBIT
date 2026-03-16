@@ -18,7 +18,6 @@ import {
   ChevronDown,
   ChevronUp,
   Layers,
-  Lock,
 } from 'lucide-react';
 
 const TABS = [
@@ -28,7 +27,6 @@ const TABS = [
   { id: 'text', label: 'Text', icon: Type },
   { id: 'crossmodal', label: 'CrossModal', icon: Layers, accept: 'video/*' },
   { id: 'batch', label: 'Batch', icon: LayoutGrid, accept: 'image/*' },
-  { id: 'provenance', label: 'Provenance', icon: Lock, accept: 'image/*' },
 ];
 
 /* ─── Drop Zone ─── */
@@ -535,15 +533,11 @@ export default function Analyzer() {
         response = await fetch('http://127.0.0.1:8000/detect/batch', { method: 'POST', body: formData });
       }
 
-      if (activeTab === 'provenance') {
-        const formData = new FormData();
-        formData.append("file", file);
-        response = await fetch("http://127.0.0.1:8000/provenance", { method: "POST", body: formData });
-      }
+      
 
       const data = await response.json();
 
-      if (activeTab === 'batch' || activeTab === 'crossmodal' || activeTab === 'provenance') {
+      if (activeTab === 'batch' || activeTab === 'crossmodal') {
         setResult(data);
       } else {
         setResult({
