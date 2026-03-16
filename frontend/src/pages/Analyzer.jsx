@@ -540,16 +540,16 @@ function WebcamDetector() {
       if (!blob) return;
       try {
         const fd = new FormData();
-        fd.append('file', blob, 'webcam-frame.jpg');
-        const res = await fetch('http://127.0.0.1:8000/detect/webcam', { method: 'POST', body: fd });
+        fd.append('file', blob, 'frame.jpg');
+        const res = await fetch('http://127.0.0.1:8000/detect/image', { method: 'POST', body: fd });
         const data = await res.json();
-        if (data.status === 'success') {
-          setResult({ prediction: data.prediction, confidence: data.confidence });
+        if (data.prediction && data.confidence != null) {
+          setResult(data);
         }
       } catch (err) {
         console.error('Webcam analysis error:', err);
       }
-    }, 'image/jpeg', 0.85);
+    }, 'image/jpeg', 0.8);
   }, []);
 
   const drawLoop = useCallback(() => {
@@ -597,9 +597,6 @@ function WebcamDetector() {
     return () => stopWebcam();
   }, []);
 
-  const isReal = result?.prediction === 'REAL';
-  const isFake = result?.prediction === 'FAKE';
-
   return (
     <div className="space-y-5">
       {/* Hidden video — never visible, just feeds frames */}
@@ -613,7 +610,7 @@ function WebcamDetector() {
       {/* Hidden canvas for API capture only */}
       <canvas ref={captureCanvasRef} style={{ display: 'none' }} />
 
-      <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', background: '#0F172A', border: '1px solid #1E293B' }}>
+      <div style={{ position: 'relative' }}>
         {/* Visible display canvas — mirrors video feed */}
         <canvas
           ref={displayCanvasRef}
@@ -624,7 +621,7 @@ function WebcamDetector() {
             height: 'auto',
             borderRadius: '12px',
             display: 'block',
-            backgroundColor: '#000',
+            backgroundColor: '#0F172A',
           }}
         />
 
@@ -633,32 +630,122 @@ function WebcamDetector() {
         <CornerBracket position="bottom-left" />
         <CornerBracket position="bottom-right" />
 
-        {isActive && (
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22C55E] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22C55E]" />
-            </span>
-            <span className="text-[10px] font-bold text-white tracking-widest">LIVE</span>
+        {/* Prediction overlay */}
+        {result && (
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            left: '12px',
+            padding: '6px 14px',
+            borderRadius: '6px',
+            background: result.prediction === 'FAKE' ? 'rgba(220,38,38,0.9)' : 'rgba(22,163,74,0.9)',
+            color: 'white',
+            fontFamily: 'monospace',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            zIndex: 10,
+          }}>
+            {result.prediction} {result.confidence?.toFixed(1)}%
           </div>
         )}
 
-        {isActive && result && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
-            <span className={`text-lg font-black tracking-tight ${isReal ? 'text-[#22C55E]' : isFake ? 'text-[#EF4444]' : 'text-white'}`}>
-              {result.prediction}
-            </span>
-            <span className="text-xs font-semibold text-white/80">{result.confidence?.toFixed(1)}%</span>
+        {/* LIVE indicator */}
+        {isActive && (
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            padding: '4px 10px',
+            borderRadius: '20px',
+            background: 'rgba(0,0,0,0.7)',
+            color: '#22c55e',
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            zIndex: 10,
+          }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} />
+            LIVE
           </div>
         )}
 
         {!isActive && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ background: '#0F172A' }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ background: '#0F172A', borderRadius: '12px' }}>
             <Camera size={48} className="text-[#334155] mb-3" />
             <p className="text-sm text-[#475569]">Click Start to begin live detection</p>
           </div>
         )}
       </div>
+
+      {/* Confidence Meter */}
+      {result && (() => {
+        const isFake = result.prediction === 'FAKE';
+        const confidence = result.confidence ?? 0;
+        const barColor = isFake ? '#EF4444' : '#22C55E';
+        const barGlow = isFake ? 'rgba(239,68,68,0.35)' : 'rgba(34,197,94,0.35)';
+        const bgTrack = isFake ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)';
+        const label = isFake ? 'DEEPFAKE DETECTED' : 'AUTHENTIC';
+        return (
+          <div style={{
+            padding: '16px 20px',
+            borderRadius: '12px',
+            background: '#0F172A',
+            border: `1px solid ${isFake ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+          }}>
+            {/* Header row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                letterSpacing: '0.1em',
+                color: barColor,
+              }}>
+                {label}
+              </span>
+              <span style={{
+                fontSize: '22px',
+                fontWeight: 800,
+                fontFamily: 'monospace',
+                color: barColor,
+              }}>
+                {confidence.toFixed(1)}%
+              </span>
+            </div>
+            {/* Bar track */}
+            <div style={{
+              width: '100%',
+              height: '10px',
+              borderRadius: '5px',
+              background: bgTrack,
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${confidence}%`,
+                height: '100%',
+                borderRadius: '5px',
+                background: `linear-gradient(90deg, ${barColor}CC, ${barColor})`,
+                boxShadow: `0 0 12px ${barGlow}`,
+                transition: 'width 0.5s ease',
+              }} />
+            </div>
+            {/* Explanation */}
+            {result.explanation && (
+              <p style={{
+                marginTop: '10px',
+                fontSize: '12px',
+                color: '#94A3B8',
+                lineHeight: '1.5',
+              }}>
+                {result.explanation}
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {error && (
         <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-sm text-[#991B1B]">{error}</div>
