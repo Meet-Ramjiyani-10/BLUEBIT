@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Shield,
@@ -14,12 +14,16 @@ import {
   FileSearch,
   Activity,
   ArrowLeft,
+  LayoutGrid,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 const TABS = [
   { id: 'image', label: 'Image', icon: ImageIcon, accept: 'image/*' },
   { id: 'audio', label: 'Audio', icon: Mic, accept: 'audio/*' },
   { id: 'video', label: 'Video', icon: VideoIcon, accept: 'video/*' },
+  { id: 'batch', label: 'Batch', icon: LayoutGrid, accept: 'image/*' },
   { id: 'text', label: 'Text', icon: Type },
 ];
 
@@ -302,6 +306,8 @@ export default function Analyzer() {
   const [activeTab, setActiveTab] = useState('image');
   const [file, setFile] = useState(null);
   const [text, setText] = useState('');
+  const [batchFiles, setBatchFiles] = useState([]);
+  const [expandedBatchRow, setExpandedBatchRow] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -353,17 +359,30 @@ export default function Analyzer() {
         });
       }
 
+      if (activeTab === 'batch') {
+        const formData = new FormData();
+        batchFiles.forEach(f => formData.append('files', f));
+        response = await fetch('http://localhost:8000/detect/batch', {
+          method: 'POST',
+          body: formData
+        });
+      }
+
       const data = await response.json();
 
-      setResult({
-        label: data.prediction,
-        confidence: data.confidence,
-        heatmap: data.heatmap ?? null,
-        explanation: data.explanation ?? null,
-        frames_analyzed: data.frames_analyzed ?? null,
-        fake_frames: data.fake_frames ?? null,
-        real_frames: data.real_frames ?? null,
-      });
+      if (activeTab === 'batch') {
+        setResult(data);
+      } else {
+        setResult({
+          label: data.prediction,
+          confidence: data.confidence,
+          heatmap: data.heatmap ?? null,
+          explanation: data.explanation ?? null,
+          frames_analyzed: data.frames_analyzed ?? null,
+          fake_frames: data.fake_frames ?? null,
+          real_frames: data.real_frames ?? null,
+        });
+      }
 
     } catch (error) {
       console.error(error);
@@ -376,13 +395,16 @@ export default function Analyzer() {
   const reset = () => {
     setFile(null);
     setText('');
+    setBatchFiles([]);
+    setExpandedBatchRow(null);
     setResult(null);
     setLoading(false);
   };
 
   const canAnalyze =
     (activeTab === 'text' && text.trim().length > 0) ||
-    ((activeTab === 'image' || activeTab === 'audio' || activeTab === 'video') && file);
+    ((activeTab === 'image' || activeTab === 'audio' || activeTab === 'video') && file) ||
+    (activeTab === 'batch' && batchFiles.length > 0);
 
   const currentTab = TABS.find((t) => t.id === activeTab);
 
@@ -465,6 +487,37 @@ export default function Analyzer() {
                   rows={8}
                   className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-5 text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#93C5FD] focus:ring-2 focus:ring-blue-500/10 resize-none text-sm leading-relaxed transition-all"
                 />
+              ) : activeTab === 'batch' ? (
+                <div className="flex flex-col gap-4">
+                  <div
+                    onClick={() => !loading && document.getElementById('batch-upload').click()}
+                    className={`relative flex flex-col justify-center items-center py-12 w-full rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
+                      batchFiles.length > 0 ? 'border-[#CBD5E1] bg-[#F8FAFC]' : 'border-[#CBD5E1] bg-[#FAFBFC] hover:border-[#93C5FD] hover:bg-blue-50/30'
+                    } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
+                    <Upload size={24} className="text-[#94A3B8] mb-3" />
+                    <p className="text-sm font-medium text-[#0F172A]">Click to select multiple images</p>
+                    <input
+                      id="batch-upload"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => setBatchFiles(Array.from(e.target.files))}
+                      disabled={loading}
+                    />
+                  </div>
+                  {batchFiles.length > 0 && (
+                    <div className="space-y-2 mt-2">
+                      <p className="text-sm font-semibold text-[#0F172A]">{batchFiles.length} files selected — ready to analyze</p>
+                      <div className="bg-white border border-[#E2E8F0] rounded-lg max-h-40 overflow-y-auto p-1 text-sm">
+                        {batchFiles.map((f, i) => (
+                          <div key={i} className="py-2 px-3 border-b text-[#475569] last:border-0 truncate font-mono text-xs">{f.name}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <DropZone
                   accept={currentTab.accept}
@@ -494,6 +547,99 @@ export default function Analyzer() {
                 ) : (
                   'Execute Analysis'
                 )}
+              </button>
+            </div>
+          </div>
+        ) : activeTab === 'batch' ? (
+          <div className="bg-white rounded-2xl border overflow-hidden shadow-lg border-[#E2E8F0] p-8 space-y-6 animate-fade-in">
+            <div className="flex items-center justify-center text-center p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+              <span className="font-medium text-[#0F172A] text-sm">
+                {result.total_files} files analyzed — <span className="text-[#EF4444] font-bold">{result.fake_detected} FAKE</span> · <span className="text-[#22C55E] font-bold">{result.real_detected} REAL</span>
+              </span>
+            </div>
+            <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#475569]">
+                  <tr>
+                    <th className="px-4 py-3 font-medium w-12 text-center">#</th>
+                    <th className="px-4 py-3 font-medium">Filename</th>
+                    <th className="px-4 py-3 font-medium text-center">Verdict</th>
+                    <th className="px-4 py-3 font-medium text-right">Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.results?.map((r, i) => {
+                    const isReal = r.prediction === 'REAL';
+                    const isExpanded = expandedBatchRow === i;
+                    return (
+                      <Fragment key={i}>
+                        <tr 
+                          onClick={() => setExpandedBatchRow(isExpanded ? null : i)}
+                          className={`border-b border-[#F1F5F9] cursor-pointer hover:bg-[#F8FAFC] transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}
+                        >
+                          <td className="px-4 py-3 text-center text-[#94A3B8]">{i + 1}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-[#0F172A] break-all">{r.filename}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                              isReal ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#EF4444]/10 text-[#EF4444]'
+                            }`}>
+                              {r.prediction}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-[#2563EB]">
+                            <div className="flex items-center justify-end gap-3">
+                              {r.confidence.toFixed(1)}%
+                              {isExpanded ? <ChevronUp size={16} className="text-[#94A3B8]" /> : <ChevronDown size={16} className="text-[#94A3B8]" />}
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
+                            <td colSpan={4} className="p-4">
+                              <div className={`p-4 rounded-xl border-l-4 bg-white shadow-sm flex flex-col md:flex-row gap-6 ${isReal ? 'border-l-[#22C55E]' : 'border-l-[#EF4444]'}`}>
+                                <div className="flex-1 space-y-4">
+                                  <div>
+                                    <p className="text-sm font-semibold text-[#0F172A] mb-1">Analysis Explanation</p>
+                                    <p className="text-sm text-[#475569] leading-relaxed">{r.explanation}</p>
+                                  </div>
+                                  <div className="space-y-1.5 mt-2">
+                                    <div className="flex justify-between text-xs text-[#475569]">
+                                      <span>Confidence</span>
+                                      <span className="font-semibold">{r.confidence.toFixed(1)}%</span>
+                                    </div>
+                                    <ConfidenceBar value={r.confidence} isReal={isReal} />
+                                  </div>
+                                  {!r.heatmap && (
+                                    <p className="text-xs text-[#94A3B8] italic mt-2">Click Analyze for full heatmap</p>
+                                  )}
+                                </div>
+                                {r.heatmap && (
+                                  <div className="shrink-0 space-y-2">
+                                    <p className="text-sm font-semibold text-[#0F172A]">Grad-CAM++ Analysis</p>
+                                    <img 
+                                      src={`data:image/png;base64,${r.heatmap}`} 
+                                      alt="Grad-CAM++ Analysis" 
+                                      className="max-h-[200px] rounded-xl border border-[#E2E8F0] shadow-sm object-contain" 
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={reset}
+                className="flex items-center gap-2 border border-[#E2E8F0] bg-white text-[#475569] px-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#F8FAFC] hover:border-[#CBD5E1] transition-all cursor-pointer shadow-sm"
+              >
+                <RotateCcw size={16} />
+                Analyze Another Batch
               </button>
             </div>
           </div>
