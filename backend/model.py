@@ -1,4 +1,5 @@
 import torch
+import av
 from transformers import AutoImageProcessor, AutoModelForImageClassification, pipeline
 from PIL import Image
 import io
@@ -6,7 +7,6 @@ import cv2
 import numpy as np
 import tempfile
 import os
-import librosa
 
 MODEL_NAME = "dima806/deepfake_vs_real_image_detection"
 
@@ -125,14 +125,32 @@ def run_text_detection(text: str) -> dict:
 
 
 def run_audio_detection(audio_bytes: bytes) -> dict:
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         f.write(audio_bytes)
         tmp_path = f.name
 
     try:
-        audio_data, samplerate = librosa.load(tmp_path, sr=16000, mono=True)
+        container = av.open(tmp_path)
+        audio_stream = next((s for s in container.streams if s.type == 'audio'), None)
+        if audio_stream is None:
+            raise RuntimeError("No audio stream found in file")
+
+        resampler = av.AudioResampler(format='s16', layout='mono', rate=16000)
+
+        chunks = []
+        for frame in container.decode(audio=0):
+            for resampled_frame in resampler.resample(frame):
+                chunks.append(resampled_frame.to_ndarray())
+
+        container.close()
+
+        if not chunks:
+            raise RuntimeError("No audio data decoded")
+
+        audio_data = np.concatenate(chunks, axis=1).squeeze().astype(np.float32) / 32768.0
     finally:
-        os.unlink(tmp_path)
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
     result = audio_classifier(
         {"array": audio_data, "sampling_rate": 16000}

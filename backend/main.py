@@ -120,6 +120,20 @@ async def detect_audio(file: UploadFile = File(...)):
     })
 
 
+# ---------------- WEBCAM DETECTION ----------------
+
+@app.post("/detect/webcam")
+async def detect_webcam(file: UploadFile = File(...)):
+    contents = await file.read()
+    result = run_image_detection(contents)
+    return JSONResponse({
+        "status": "success",
+        "prediction": result["prediction"],
+        "confidence": result["confidence"],
+        "explanation": result.get("explanation")
+    })
+
+
 # ---------------- VIDEO DETECTION ----------------
 
 @app.post("/detect/video")
@@ -236,7 +250,8 @@ async def detect_batch(files: list[UploadFile] = File(...)):
 @app.post("/detect/crossmodal")
 async def detect_crossmodal(file: UploadFile = File(...)):
     import cv2, tempfile, os
-    import librosa
+    import av
+    import numpy as np
 
     contents = await file.read()
 
@@ -244,7 +259,7 @@ async def detect_crossmodal(file: UploadFile = File(...)):
         f.write(contents)
         tmp_video_path = f.name
 
-    # Video frame analysis
+    # ── Video frame analysis ──
     cap = cv2.VideoCapture(tmp_video_path)
     frame_results = []
     frame_count = 0
@@ -287,10 +302,30 @@ async def detect_crossmodal(file: UploadFile = File(...)):
         "real_frames": total - fake_count
     }
 
-    # Audio analysis
+    # ── Audio analysis — extract audio from mp4 using PyAV (bundled ffmpeg) ──
     audio_result = None
     try:
-        audio_data, samplerate = librosa.load(tmp_video_path, sr=16000, mono=True)
+        container = av.open(tmp_video_path)
+        audio_stream = next((s for s in container.streams if s.type == 'audio'), None)
+
+        if audio_stream is None:
+            raise RuntimeError("No audio stream found in video")
+
+        resampler = av.AudioResampler(format='s16', layout='mono', rate=16000)
+
+        chunks = []
+        for frame in container.decode(audio=0):
+            for resampled_frame in resampler.resample(frame):
+                arr = resampled_frame.to_ndarray()
+                chunks.append(arr)
+
+        container.close()
+
+        if not chunks:
+            raise RuntimeError("Extracted audio is empty")
+
+        audio_data = np.concatenate(chunks, axis=1).squeeze().astype(np.float32) / 32768.0
+
         from model import audio_classifier
         raw_result = audio_classifier(
             {"array": audio_data, "sampling_rate": 16000}
@@ -305,13 +340,15 @@ async def detect_crossmodal(file: UploadFile = File(...)):
             "explanation": "wav2vec 2.0 detected synthetic speech artifacts." if audio_prediction == "FAKE" else "Audio shows authentic human speech characteristics."
         }
     except Exception as e:
+        print(f"[crossmodal] Audio extraction failed: {e}")
         audio_result = {
             "prediction": "N/A",
             "confidence": 0,
             "explanation": f"Could not extract audio: {str(e)}"
         }
     finally:
-        os.unlink(tmp_video_path)
+        if os.path.exists(tmp_video_path):
+            os.unlink(tmp_video_path)
 
     # Cross-modal verdict
     v_fake = video_prediction == "FAKE"

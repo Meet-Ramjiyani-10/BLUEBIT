@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, Fragment } from 'react';
+import { useState, useRef, useCallback, useEffect, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Shield,
@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
   Layers,
+  Camera,
 } from 'lucide-react';
 
 const TABS = [
@@ -27,6 +28,7 @@ const TABS = [
   { id: 'text', label: 'Text', icon: Type },
   { id: 'crossmodal', label: 'CrossModal', icon: Layers, accept: 'video/*' },
   { id: 'batch', label: 'Batch', icon: LayoutGrid, accept: 'image/*' },
+  { id: 'webcam', label: 'Live', icon: Camera, accept: null },
 ];
 
 /* ─── Drop Zone ─── */
@@ -480,6 +482,183 @@ function ProvenanceResult({ result, onReset }) {
   );
 }
 
+/* ─── Corner Bracket ─── */
+function CornerBracket({ position }) {
+  const base = 'absolute w-5 h-5 border-[#2563EB]';
+  const styles = {
+    'top-left': `${base} top-3 left-3 border-t-2 border-l-2 rounded-tl-sm`,
+    'top-right': `${base} top-3 right-3 border-t-2 border-r-2 rounded-tr-sm`,
+    'bottom-left': `${base} bottom-3 left-3 border-b-2 border-l-2 rounded-bl-sm`,
+    'bottom-right': `${base} bottom-3 right-3 border-b-2 border-r-2 rounded-br-sm`,
+  };
+  return <div className={styles[position]} />;
+}
+
+/* ─── Webcam Detector ─── */
+function WebcamDetector() {
+  const videoRef = useRef(null);
+  const displayCanvasRef = useRef(null);
+  const captureCanvasRef = useRef(null);
+  const intervalRef = useRef(null);
+  const streamRef = useRef(null);
+  const rafRef = useRef(null);
+
+  const [isActive, setIsActive] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const captureAndAnalyze = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = captureCanvasRef.current;
+    if (!video || !canvas || video.readyState < 2) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      try {
+        const fd = new FormData();
+        fd.append('file', blob, 'webcam-frame.jpg');
+        const res = await fetch('http://127.0.0.1:8000/detect/webcam', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.status === 'success') {
+          setResult({ prediction: data.prediction, confidence: data.confidence });
+        }
+      } catch (err) {
+        console.error('Webcam analysis error:', err);
+      }
+    }, 'image/jpeg', 0.85);
+  }, []);
+
+  const drawLoop = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = displayCanvasRef.current;
+    if (video && canvas && video.readyState >= 2 && video.videoWidth > 0) {
+      if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth;
+      if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+    }
+    rafRef.current = requestAnimationFrame(drawLoop);
+  }, []);
+
+  const startWebcam = async () => {
+    setError(null);
+    setResult(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480 },
+      });
+      streamRef.current = stream;
+      const video = videoRef.current;
+      video.srcObject = stream;
+      video.onloadedmetadata = () => {
+        video.play();
+        setIsActive(true);
+        rafRef.current = requestAnimationFrame(drawLoop);
+        intervalRef.current = setInterval(captureAndAnalyze, 2000);
+      };
+    } catch (err) {
+      setError('Camera error: ' + err.message);
+    }
+  };
+
+  const stopWebcam = () => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setIsActive(false);
+    setResult(null);
+  };
+
+  useEffect(() => {
+    return () => stopWebcam();
+  }, []);
+
+  const isReal = result?.prediction === 'REAL';
+  const isFake = result?.prediction === 'FAKE';
+
+  return (
+    <div className="space-y-5">
+      {/* Hidden video — never visible, just feeds frames */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{ position: 'fixed', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none', zIndex: -1 }}
+      />
+      {/* Hidden canvas for API capture only */}
+      <canvas ref={captureCanvasRef} style={{ display: 'none' }} />
+
+      <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', background: '#0F172A', border: '1px solid #1E293B' }}>
+        {/* Visible display canvas — mirrors video feed */}
+        <canvas
+          ref={displayCanvasRef}
+          width={640}
+          height={480}
+          style={{
+            width: '100%',
+            height: 'auto',
+            borderRadius: '12px',
+            display: 'block',
+            backgroundColor: '#000',
+          }}
+        />
+
+        <CornerBracket position="top-left" />
+        <CornerBracket position="top-right" />
+        <CornerBracket position="bottom-left" />
+        <CornerBracket position="bottom-right" />
+
+        {isActive && (
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22C55E] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22C55E]" />
+            </span>
+            <span className="text-[10px] font-bold text-white tracking-widest">LIVE</span>
+          </div>
+        )}
+
+        {isActive && result && (
+          <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
+            <span className={`text-lg font-black tracking-tight ${isReal ? 'text-[#22C55E]' : isFake ? 'text-[#EF4444]' : 'text-white'}`}>
+              {result.prediction}
+            </span>
+            <span className="text-xs font-semibold text-white/80">{result.confidence?.toFixed(1)}%</span>
+          </div>
+        )}
+
+        {!isActive && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ background: '#0F172A' }}>
+            <Camera size={48} className="text-[#334155] mb-3" />
+            <p className="text-sm text-[#475569]">Click Start to begin live detection</p>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-sm text-[#991B1B]">{error}</div>
+      )}
+
+      <div className="flex gap-3">
+        {!isActive ? (
+          <button onClick={startWebcam} className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-sm font-semibold bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-lg shadow-blue-500/20 transition-all cursor-pointer">
+            <Camera size={18} /> START LIVE DETECTION
+          </button>
+        ) : (
+          <button onClick={stopWebcam} className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-sm font-semibold bg-[#EF4444] text-white hover:bg-[#DC2626] shadow-lg shadow-red-500/20 transition-all cursor-pointer">
+            <XCircle size={18} /> STOP
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ═══════ ANALYZER PAGE ═══════ */
 export default function Analyzer() {
   const [activeTab, setActiveTab] = useState('image');
@@ -703,6 +882,8 @@ export default function Analyzer() {
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'webcam' ? (
+                <WebcamDetector />
               ) : (
                 <DropZone
                   accept={currentTab?.accept || 'image/*'}
@@ -713,28 +894,30 @@ export default function Analyzer() {
               )}
             </div>
 
-              {/* Analyze button */}
-              <div className="px-6 pb-6">
-                <button
-                  disabled={!canAnalyze || loading}
-                  onClick={handleAnalyze}
-                  className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-semibold transition-all ${
-                    canAnalyze && !loading
-                      ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-lg shadow-blue-500/20 cursor-pointer'
-                      : 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed'
-                  }`}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      <span>Analyzing with {activeTab === 'image' ? 'Vision Transformer' : activeTab === 'audio' ? 'wav2vec 2.0' : activeTab === 'video' ? 'Video Processor' : 'RoBERTa'}...</span>
-                    </>
-                  ) : (
-                    'Execute Analysis'
-                  )}
-                </button>
-              </div>
+            {/* Analyze button */}
+            {activeTab !== 'webcam' && (
+            <div className="px-6 pb-6">
+              <button
+                disabled={!canAnalyze || loading}
+                onClick={handleAnalyze}
+                className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-semibold transition-all ${
+                  canAnalyze && !loading
+                    ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-lg shadow-blue-500/20 cursor-pointer'
+                    : 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>{getLoadingText()}</span>
+                  </>
+                ) : (
+                  'Execute Analysis'
+                )}
+              </button>
             </div>
+            )}
+          </div>
           ) : (
             <ResultCard
               result={result}
