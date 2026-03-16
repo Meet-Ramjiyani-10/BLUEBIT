@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import tempfile
 import os
-import soundfile as sf
+import librosa
 
 MODEL_NAME = "dima806/deepfake_vs_real_image_detection"
 
@@ -16,9 +16,6 @@ text_classifier = None
 audio_classifier = None
 
 
-# -----------------------------
-# Load all models once at startup
-# -----------------------------
 def load_model():
     global extractor, model, text_classifier, audio_classifier
 
@@ -50,14 +47,7 @@ def get_extractor():
     return extractor
 
 
-# -----------------------------
-# Face Detection + Cropping
-# -----------------------------
 def crop_face(image_bytes: bytes) -> bytes:
-    """
-    Detect and crop the largest face before deepfake detection
-    """
-
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
@@ -72,84 +62,60 @@ def crop_face(image_bytes: bytes) -> bytes:
         return image_bytes
 
     x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
-
     padding = int(w * 0.3)
-
     x1 = max(0, x - padding)
     y1 = max(0, y - padding)
     x2 = min(img.shape[1], x + w + padding)
     y2 = min(img.shape[0], y + h + padding)
-
     cropped = img[y1:y2, x1:x2]
-
     _, buffer = cv2.imencode(".jpg", cropped)
-
     return buffer.tobytes()
 
 
-# -----------------------------
-# Image Deepfake Detection
-# -----------------------------
 def run_image_detection(image_bytes: bytes) -> dict:
-
-    # Auto crop face for better accuracy
     image_bytes = crop_face(image_bytes)
-
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-
     inputs = extractor(images=image, return_tensors="pt")
 
     with torch.no_grad():
         outputs = model(**inputs)
         logits = outputs.logits
         probs = torch.softmax(logits, dim=-1)
-
         predicted_class = torch.argmax(probs, dim=-1).item()
         confidence = probs[0][predicted_class].item()
 
     label = model.config.id2label[predicted_class].upper()
+    confidence_pct = round(confidence * 100, 2)
 
-    # Explanation logic
-    if confidence > 0.9:
-        explanation = (
-            "Strong manipulation artifacts detected — facial boundary blending, "
-            "skin texture irregularities and GAN fingerprints identified."
-        )
-    elif confidence > 0.7:
-        explanation = (
-            "Moderate manipulation signals detected — possible face synthesis "
-            "or swap artifacts present."
-        )
+    if label == "FAKE":
+        if confidence_pct > 90:
+            explanation = "Strong manipulation detected — unnatural skin texture, boundary inconsistencies and GAN fingerprints identified by Vision Transformer."
+        elif confidence_pct > 70:
+            explanation = "Moderate manipulation signals detected — possible face swap or expression synthesis with some authentic regions present."
+        else:
+            explanation = "Weak manipulation signals detected — minor anomalies present but inconclusive."
     else:
-        explanation = (
-            "Low manipulation signals — image appears largely authentic "
-            "with minimal anomalies."
-        )
+        if confidence_pct > 90:
+            explanation = "No manipulation detected — facial features show natural skin texture, authentic boundaries and no synthetic artifacts found."
+        elif confidence_pct > 70:
+            explanation = "Content appears authentic — no significant manipulation artifacts detected by Vision Transformer."
+        else:
+            explanation = "Likely authentic — low confidence result, consider re-analyzing with a clearer image."
 
     return {
         "prediction": label,
-        "confidence": round(confidence * 100, 2),
+        "confidence": confidence_pct,
         "explanation": explanation
     }
 
 
-# -----------------------------
-# Text AI Detection
-# -----------------------------
 def run_text_detection(text: str) -> dict:
-
     result = text_classifier(text)[0]
 
     if result["label"] == "Fake":
-        explanation = (
-            "RoBERTa detected language patterns typical of AI generated text — "
-            "uniform perplexity, reduced burstiness and synthetic structure."
-        )
+        explanation = "RoBERTa detected language patterns typical of AI generated text — uniform perplexity, reduced burstiness and synthetic sentence structure."
     else:
-        explanation = (
-            "Text exhibits natural human writing characteristics — varied sentence "
-            "structure and organic word choice."
-        )
+        explanation = "Text exhibits natural human writing characteristics — varied sentence structure, authentic perplexity distribution and organic word choice."
 
     return {
         "prediction": "AI GENERATED" if result["label"] == "Fake" else "HUMAN WRITTEN",
@@ -158,39 +124,42 @@ def run_text_detection(text: str) -> dict:
     }
 
 
-# -----------------------------
-# Audio Deepfake Detection
-# -----------------------------
 def run_audio_detection(audio_bytes: bytes) -> dict:
-
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
         f.write(audio_bytes)
         tmp_path = f.name
 
     try:
-        audio_data, samplerate = sf.read(tmp_path)
-
-        # convert stereo → mono
-        if len(audio_data.shape) > 1:
-            audio_data = audio_data.mean(axis=1)
-
+        audio_data, samplerate = librosa.load(tmp_path, sr=16000, mono=True)
     finally:
         os.unlink(tmp_path)
 
+    result = audio_classifier(
+        {"array": audio_data, "sampling_rate": 16000}
+    )[0]
+
+    if result["label"].lower() == "fake":
+        explanation = "wav2vec 2.0 detected synthetic speech artifacts — abnormal prosody, TTS signatures and inconsistent vocal tract patterns identified."
+    else:
+        explanation = "Audio shows authentic human speech characteristics — natural pitch variation, organic vocal resonance and no synthetic patterns detected."
+
+    return {
+        "prediction": "FAKE" if result["label"].lower() == "fake" else "REAL",
+        "confidence": round(result["score"] * 100, 2),
+        "explanation": explanation
+    }
+
+
+def run_audio_detection_from_array(audio_data, samplerate=16000) -> dict:
+    """Run audio detection directly from numpy array — used by crossmodal"""
     result = audio_classifier(
         {"array": audio_data, "sampling_rate": samplerate}
     )[0]
 
     if result["label"].lower() == "fake":
-        explanation = (
-            "wav2vec 2.0 detected synthetic speech artifacts — abnormal prosody, "
-            "TTS signatures and inconsistent vocal tract patterns."
-        )
+        explanation = "wav2vec 2.0 detected synthetic speech artifacts — abnormal prosody, TTS signatures and inconsistent vocal tract patterns identified."
     else:
-        explanation = (
-            "Audio shows authentic human speech characteristics — natural pitch "
-            "variation and organic vocal resonance."
-        )
+        explanation = "Audio shows authentic human speech characteristics — natural pitch variation and organic vocal resonance."
 
     return {
         "prediction": "FAKE" if result["label"].lower() == "fake" else "REAL",
