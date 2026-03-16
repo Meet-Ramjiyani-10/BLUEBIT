@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import logo from '../assets/download.png';
 import {
   Shield,
   CheckCircle2,
@@ -47,22 +48,93 @@ const SECTIONS = [
 
 export default function Landing() {
   const [activeSection, setActiveSection] = useState('section-overview');
+  const containerRef = useRef(null);
 
   const showSection = (id) => {
     setActiveSection(id);
     window.scrollTo(0, 0);
   };
 
+  /* ─── Scroll-reveal Intersection Observer ─── */
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    // Reset all reveal targets so they animate fresh on section switch
+    const targets = root.querySelectorAll('[data-reveal], [data-reveal-stagger]');
+    targets.forEach((el) => el.classList.remove('revealed'));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    // Slight delay so display:block has taken effect
+    const timer = setTimeout(() => {
+      targets.forEach((el) => observer.observe(el));
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [activeSection]);
+
+  /* ─── Auto-advance to next tab on scroll-to-bottom ─── */
+  const activeSectionRef = useRef(activeSection);
+  activeSectionRef.current = activeSection;
+
+  useEffect(() => {
+    const SECTION_ORDER = [
+      'section-overview',
+      'section-how-it-works',
+      'section-capabilities',
+      'section-technology',
+    ];
+    let cooldown = false;
+
+    const handleScroll = () => {
+      if (cooldown) return;
+
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+
+      // Check if at absolute bottom (within 5px threshold)
+      if (scrollTop + windowHeight >= docHeight - 5) {
+        const currentIdx = SECTION_ORDER.indexOf(activeSectionRef.current);
+        if (currentIdx < SECTION_ORDER.length - 1) {
+          cooldown = true;
+          // Brief pause at the bottom before gliding to the next section
+          setTimeout(() => {
+            setActiveSection(SECTION_ORDER[currentIdx + 1]);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Cooldown to prevent re-triggering during scroll-to-top
+            setTimeout(() => { cooldown = false; }, 1000);
+          }, 300);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
+    <div ref={containerRef} className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
       {/* ═══════ NAVBAR ═══════ */}
       {/* CHANGE 1 — added "Multi-Modal", "Provenance" links + v2.0 badge */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-[#E2E8F0]">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center">
-              <Shield size={16} className="text-white" />
-            </div>
+            <img src={logo} alt="Hologram Truth Analyzer" className="h-10 w-10 rounded-lg object-cover" />
             <span className="font-bold text-[15px] tracking-tight">Hologram Truth Analyzer</span>
             <span className="text-[10px] font-semibold text-[#2563EB] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full whitespace-nowrap">
               v2.0 · 5 new capabilities
@@ -95,11 +167,10 @@ export default function Landing() {
                 key={s.id}
                 data-section={s.id}
                 onClick={() => showSection(s.id)}
-                className={`section-nav-btn relative px-5 py-2 rounded-[10px] text-[13px] font-semibold transition-all duration-200 cursor-pointer border-none outline-none ${
-                  activeSection === s.id
-                    ? 'bg-white text-[#0F172A] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.06)]'
-                    : 'bg-transparent text-[#64748B] hover:text-[#334155]'
-                }`}
+                className={`section-nav-btn relative px-5 py-2 rounded-[10px] text-[13px] font-semibold transition-all duration-200 cursor-pointer border-none outline-none ${activeSection === s.id
+                  ? 'bg-white text-[#0F172A] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.06)]'
+                  : 'bg-transparent text-[#64748B] hover:text-[#334155]'
+                  }`}
               >
                 {activeSection === s.id && (
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full bg-[#2563EB]" />
@@ -114,10 +185,10 @@ export default function Landing() {
       {/* ══════════════════════════════════════════ */}
       {/* SECTION 1 — Overview                       */}
       {/* ══════════════════════════════════════════ */}
-      <div id="section-overview" style={{ display: activeSection === 'section-overview' ? 'block' : 'none' }}>
+      <div key={activeSection === 'section-overview' ? 'overview-active' : 'overview'} id="section-overview" className={activeSection === 'section-overview' ? 'section-panel-active' : 'section-panel-hidden'}>
 
         {/* ═══════ HERO ═══════ */}
-        <section className="relative overflow-hidden">
+        <section data-reveal className="relative overflow-hidden">
           {/* Subtle gradient bg */}
           <div className="absolute inset-0 bg-gradient-to-b from-white via-blue-50/40 to-[#F8FAFC] pointer-events-none" />
           <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-[#2563EB]/[0.04] blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
@@ -197,7 +268,7 @@ export default function Landing() {
 
         {/* ═══════ TRUST INDICATORS ═══════ */}
         {/* CHANGE 4 — features strip: 6 badges total */}
-        <section className="py-12 border-y border-[#E2E8F0] bg-white">
+        <section data-reveal className="py-12 border-y border-[#E2E8F0] bg-white">
           <div className="max-w-5xl mx-auto px-6 flex flex-wrap justify-center gap-x-10 gap-y-4">
             {[
               'Multi-Modal Detection',
@@ -216,7 +287,7 @@ export default function Landing() {
         </section>
 
         {/* ═══════ CHANGE 6 — "How We Verify It" ═══════ */}
-        <section className="py-20 md:py-28 bg-white border-y border-[#E2E8F0]">
+        <section data-reveal className="py-20 md:py-28 bg-white border-y border-[#E2E8F0]">
           <div className="max-w-5xl mx-auto px-6">
             <div className="text-center mb-14">
               <p className="text-sm font-semibold text-[#2563EB] mb-2">5 New Capabilities</p>
@@ -226,7 +297,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-5">
+            <div data-reveal-stagger className="grid sm:grid-cols-2 gap-5">
               {[
                 { icon: Crosshair, title: 'Cross-Modal Verification', desc: 'Checks if audio phonemes match video lip movements frame by frame using wav2vec 2.0 and facial landmark tracking.', color: '#2563EB' },
                 { icon: Lightbulb, title: 'Explainability Engine', desc: 'Visual heatmaps, bounding boxes, and plain-language explanations show exactly why content was flagged.', color: '#7C3AED' },
@@ -260,10 +331,10 @@ export default function Landing() {
       {/* ══════════════════════════════════════════ */}
       {/* SECTION 2 — How It Works                   */}
       {/* ══════════════════════════════════════════ */}
-      <div id="section-how-it-works" style={{ display: activeSection === 'section-how-it-works' ? 'block' : 'none' }}>
+      <div key={activeSection === 'section-how-it-works' ? 'howitworks-active' : 'howitworks'} id="section-how-it-works" className={activeSection === 'section-how-it-works' ? 'section-panel-active' : 'section-panel-hidden'}>
 
         {/* ═══════ WHAT IS A DEEPFAKE ═══════ */}
-        <section id="about-detection" className="py-20 md:py-28">
+        <section data-reveal id="about-detection" className="py-20 md:py-28">
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid md:grid-cols-2 gap-16">
               {/* Deepfakes */}
@@ -310,7 +381,7 @@ export default function Landing() {
         </section>
 
         {/* ═══════ COMPARISON TABLE ═══════ */}
-        <section className="py-16 bg-white border-y border-[#E2E8F0]">
+        <section data-reveal className="py-16 bg-white border-y border-[#E2E8F0]">
           <div className="max-w-4xl mx-auto px-6">
             <h2 className="text-2xl font-bold tracking-tight text-center mb-10">Deepfakes vs AI-Generated Media</h2>
             <div className="grid md:grid-cols-2 gap-6">
@@ -340,7 +411,7 @@ export default function Landing() {
 
         {/* ═══════ HOW IT WORKS ═══════ */}
         {/* CHANGE 8 & 9 — updated Step 2 and Step 3 descriptions */}
-        <section id="how-it-works" className="py-20 md:py-28">
+        <section data-reveal id="how-it-works" className="py-20 md:py-28">
           <div className="max-w-5xl mx-auto px-6">
             <div className="text-center mb-16">
               <p className="text-sm font-semibold text-[#2563EB] mb-2">Process</p>
@@ -395,7 +466,7 @@ export default function Landing() {
 
         {/* ═══════ ANALYZER FLOW DEMO ═══════ */}
         {/* CHANGE 12 — includes Steps 5, 6, 7 */}
-        <section className="py-20 md:py-28 bg-white border-y border-[#E2E8F0]">
+        <section data-reveal className="py-20 md:py-28 bg-white border-y border-[#E2E8F0]">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
               <p className="text-sm font-semibold text-[#06B6D4] mb-2">End-to-End Flow</p>
@@ -422,11 +493,10 @@ export default function Landing() {
                     ].map(({ icon: Icon, label, desc, active }) => (
                       <div
                         key={label}
-                        className={`flex flex-col items-center gap-1.5 py-4 rounded-xl border text-center transition-all ${
-                          active
-                            ? 'border-[#2563EB] bg-blue-50/60 shadow-sm'
-                            : 'border-[#E2E8F0] bg-white'
-                        }`}
+                        className={`flex flex-col items-center gap-1.5 py-4 rounded-xl border text-center transition-all ${active
+                          ? 'border-[#2563EB] bg-blue-50/60 shadow-sm'
+                          : 'border-[#E2E8F0] bg-white'
+                          }`}
                       >
                         <Icon size={20} className={active ? 'text-[#2563EB]' : 'text-[#94A3B8]'} />
                         <span className={`text-sm font-semibold ${active ? 'text-[#2563EB]' : 'text-[#475569]'}`}>{label}</span>
@@ -614,18 +684,18 @@ export default function Landing() {
       {/* ══════════════════════════════════════════ */}
       {/* SECTION 3 — Capabilities                   */}
       {/* ══════════════════════════════════════════ */}
-      <div id="section-capabilities" style={{ display: activeSection === 'section-capabilities' ? 'block' : 'none' }}>
+      <div key={activeSection === 'section-capabilities' ? 'capabilities-active' : 'capabilities'} id="section-capabilities" className={activeSection === 'section-capabilities' ? 'section-panel-active' : 'section-panel-hidden'}>
 
         {/* ═══════ FEATURES ═══════ */}
         {/* CHANGE 7 — 4 new cards appended */}
-        <section className="py-20 bg-white border-y border-[#E2E8F0]">
+        <section data-reveal className="py-20 bg-white border-y border-[#E2E8F0]">
           <div className="max-w-5xl mx-auto px-6">
             <div className="text-center mb-14">
               <p className="text-sm font-semibold text-[#7C3AED] mb-2">Capabilities</p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Detection Features</h2>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-5">
+            <div data-reveal-stagger className="grid sm:grid-cols-2 gap-5">
               {[
                 { icon: ImageIcon, title: 'Deepfake Image Detection', desc: 'Identify AI-manipulated and GAN-generated images using Vision Transformer analysis.', color: '#2563EB' },
                 { icon: Mic, title: 'Audio Authenticity Analysis', desc: 'Detect synthetic voices and cloned audio using wav2vec 2.0 feature extraction.', color: '#7C3AED' },
@@ -657,7 +727,7 @@ export default function Landing() {
         </section>
 
         {/* ═══════ CHANGE 10 — Performance stats bar ═══════ */}
-        <section className="py-20">
+        <section data-reveal className="py-20">
           <div className="max-w-5xl mx-auto px-6">
             <div className="flex flex-wrap justify-center gap-x-16 gap-y-8">
               {[
@@ -682,10 +752,10 @@ export default function Landing() {
       {/* ══════════════════════════════════════════ */}
       {/* SECTION 4 — Technology                     */}
       {/* ══════════════════════════════════════════ */}
-      <div id="section-technology" style={{ display: activeSection === 'section-technology' ? 'block' : 'none' }}>
+      <div key={activeSection === 'section-technology' ? 'technology-active' : 'technology'} id="section-technology" className={activeSection === 'section-technology' ? 'section-panel-active' : 'section-panel-hidden'}>
 
         {/* ═══════ TECH STACK ═══════ */}
-        <section className="py-20">
+        <section data-reveal className="py-20">
           <div className="max-w-5xl mx-auto px-6">
             <div className="text-center mb-14">
               <p className="text-sm font-semibold text-[#06B6D4] mb-2">Technology</p>
@@ -707,7 +777,7 @@ export default function Landing() {
         </section>
 
         {/* ═══════ CTA ═══════ */}
-        <section className="py-20">
+        <section data-reveal className="py-20">
           <div className="max-w-4xl mx-auto px-6">
             <div className="rounded-3xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] p-12 md:p-16 text-center text-white relative overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.1),transparent_70%)]" />
@@ -732,9 +802,7 @@ export default function Landing() {
         <footer className="border-t border-[#E2E8F0] bg-white py-10">
           <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center">
-                <Shield size={14} className="text-white" />
-              </div>
+              <img src={logo} alt="Hologram Truth Analyzer" className="h-8 w-8 rounded-lg object-cover" />
               <span className="font-bold text-sm text-[#0F172A]">Hologram Truth Analyzer</span>
             </div>
             <p className="text-sm text-[#94A3B8]">
