@@ -45,73 +45,73 @@ function DropZone({ accept, file, onFile, loading }) {
     [onFile, loading]
   );
 
-  return (
-    <div
-      onDragOver={(e) => { e.preventDefault(); if (!loading) setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={handleDrop}
-      onClick={() => { if (!loading) inputRef.current?.click(); }}
-      className={`relative flex flex-col justify-center items-center min-h-[260px] w-full rounded-xl border-2 border-dashed transition-all duration-200 ${
-        loading ? 'cursor-default opacity-60' : 'cursor-pointer'
-      } ${
-        dragOver
-          ? 'border-[#2563EB] bg-blue-50/60'
-          : file
-          ? 'border-[#CBD5E1] bg-[#F8FAFC]'
-          : 'border-[#CBD5E1] bg-[#FAFBFC] hover:border-[#93C5FD] hover:bg-blue-50/30'
-      }`}
-    >
-      {file ? (
-        <div className="flex flex-col items-center gap-4 p-6">
-          {accept.startsWith('image') ? (
-            <img
-              src={URL.createObjectURL(file)}
-              alt="preview"
-              className="max-h-44 rounded-xl object-contain shadow-lg border border-[#E2E8F0]"
-            />
-          ) : accept.startsWith('video') ? (
-            <div className="w-20 h-20 rounded-2xl bg-[#7C3AED]/10 flex items-center justify-center">
-              <VideoIcon size={32} className="text-[#7C3AED]" />
+    return (
+      <div
+        onDragOver={(e) => { e.preventDefault(); if (!loading) setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onClick={() => { if (!loading) inputRef.current?.click(); }}
+        className={`relative flex flex-col justify-center items-center min-h-[260px] w-full rounded-xl border-2 border-dashed transition-all duration-200 ${
+          loading ? 'cursor-default opacity-60' : 'cursor-pointer'
+        } ${
+          dragOver
+            ? 'border-[#2563EB] bg-blue-50/60'
+            : file
+            ? 'border-[#CBD5E1] bg-[#F8FAFC]'
+            : 'border-[#CBD5E1] bg-[#FAFBFC] hover:border-[#93C5FD] hover:bg-blue-50/30'
+        }`}
+      >
+        {file ? (
+          <div className="flex flex-col items-center gap-4 p-6">
+            {accept.startsWith('image') ? (
+              <img
+                src={URL.createObjectURL(file)}
+                alt="preview"
+                className="max-h-44 rounded-xl object-contain shadow-lg border border-[#E2E8F0]"
+              />
+            ) : accept.startsWith('video') ? (
+              <div className="w-20 h-20 rounded-2xl bg-[#7C3AED]/10 flex items-center justify-center">
+                <VideoIcon size={32} className="text-[#7C3AED]" />
+              </div>
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-[#2563EB]/10 flex items-center justify-center">
+                <Mic size={32} className="text-[#2563EB]" />
+              </div>
+            )}
+            <div className="flex items-center gap-3 bg-white border border-[#E2E8F0] rounded-lg px-4 py-2.5 shadow-sm">
+              <span className="text-sm font-medium text-[#0F172A] max-w-[180px] truncate">{file.name}</span>
+              <span className="text-xs text-[#94A3B8]">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+              <CheckCircle2 size={16} className="text-[#22C55E]" />
             </div>
-          ) : (
-            <div className="w-20 h-20 rounded-2xl bg-[#2563EB]/10 flex items-center justify-center">
-              <Mic size={32} className="text-[#2563EB]" />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 pointer-events-none p-6">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${dragOver ? 'bg-[#2563EB]/10' : 'bg-[#F1F5F9]'} transition-colors`}>
+              <Upload size={24} className={dragOver ? 'text-[#2563EB]' : 'text-[#94A3B8]'} />
             </div>
-          )}
-          <div className="flex items-center gap-3 bg-white border border-[#E2E8F0] rounded-lg px-4 py-2.5 shadow-sm">
-            <span className="text-sm font-medium text-[#0F172A] max-w-[180px] truncate">{file.name}</span>
-            <span className="text-xs text-[#94A3B8]">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-            <CheckCircle2 size={16} className="text-[#22C55E]" />
+            <div className="text-center">
+              <p className="text-sm font-medium text-[#0F172A]">
+                {dragOver ? 'Drop to upload' : 'Drag & drop or click to browse'}
+              </p>
+              <p className="text-xs text-[#94A3B8] mt-1">
+                {accept.startsWith('image') ? 'JPEG, PNG, WebP up to 10 MB' :
+                accept.startsWith('video') ? 'MP4, AVI, MOV up to 50 MB' :
+                'WAV, MP3, M4A up to 25 MB'}
+              </p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-3 pointer-events-none p-6">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${dragOver ? 'bg-[#2563EB]/10' : 'bg-[#F1F5F9]'} transition-colors`}>
-            <Upload size={24} className={dragOver ? 'text-[#2563EB]' : 'text-[#94A3B8]'} />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-[#0F172A]">
-              {dragOver ? 'Drop to upload' : 'Drag & drop or click to browse'}
-            </p>
-            <p className="text-xs text-[#94A3B8] mt-1">
-              {accept.startsWith('image') ? 'JPEG, PNG, WebP up to 10 MB' :
-              accept.startsWith('video') ? 'MP4, AVI, MOV up to 50 MB' :
-              'WAV, MP3, M4A up to 25 MB'}
-            </p>
-          </div>
-        </div>
-      )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        disabled={loading}
-        onChange={(e) => { if (e.target.files[0]) onFile(e.target.files[0]); }}
-      />
-    </div>
-  );
-}
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          disabled={loading}
+          onChange={(e) => { if (e.target.files[0]) onFile(e.target.files[0]); }}
+        />
+      </div>
+    );
+  }
 
 /* ─── Confidence Bar ─── */
 function ConfidenceBar({ value, isReal }) {
@@ -132,12 +132,14 @@ function ConfidenceBar({ value, isReal }) {
 function ResultCard({ result, file, activeTab, onReset }) {
   const isReal = result.label?.includes("REAL") || result.label?.includes("HUMAN");
 
-  return (
-    <div className="animate-fade-in space-y-6">
-      <div className={`bg-white rounded-2xl border overflow-hidden shadow-lg ${
-        isReal ? 'border-[#BBF7D0] shadow-green-500/5' : 'border-[#FECACA] shadow-red-500/5'
-      }`}>
-        <div className={`h-1.5 w-full ${isReal ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
+    return (
+      <div className="animate-fade-in space-y-6">
+        {/* Main result card */}
+        <div className={`bg-white rounded-2xl border overflow-hidden shadow-lg ${
+          isReal ? 'border-[#BBF7D0] shadow-green-500/5' : 'border-[#FECACA] shadow-red-500/5'
+        }`}>
+          {/* Status bar */}
+          <div className={`h-1.5 w-full ${isReal ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
 
         <div className="p-8 space-y-8">
           {/* Verdict */}
@@ -591,33 +593,33 @@ export default function Analyzer() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-[#E2E8F0]">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-16">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2 text-[#475569] hover:text-[#0F172A] transition-colors text-sm font-medium">
-              <ArrowLeft size={16} />
-              <span className="hidden sm:inline">Back</span>
-            </Link>
-            <div className="h-6 w-px bg-[#E2E8F0]" />
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center">
-                <Shield size={16} className="text-white" />
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased">
+        {/* ── Navbar ── */}
+        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-[#E2E8F0]">
+          <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-16">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="flex items-center gap-2 text-[#475569] hover:text-[#0F172A] transition-colors text-sm font-medium">
+                <ArrowLeft size={16} />
+                <span className="hidden sm:inline">Back</span>
+              </Link>
+              <div className="h-6 w-px bg-[#E2E8F0]" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center">
+                  <Shield size={16} className="text-white" />
+                </div>
+                <span className="font-bold text-[15px] tracking-tight">Hologram Truth Analyzer</span>
               </div>
-              <span className="font-bold text-[15px] tracking-tight">Hologram Truth Analyzer</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22C55E] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22C55E]" />
+              </span>
+              <span className="text-xs font-semibold text-[#22C55E]">System Online</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22C55E] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22C55E]" />
-            </span>
-            <span className="text-xs font-semibold text-[#22C55E]">System Online</span>
-          </div>
-        </div>
-      </nav>
+        </nav>
 
       <main className="max-w-3xl mx-auto px-4 py-12 space-y-8">
         <div className="text-center space-y-3">
@@ -627,125 +629,36 @@ export default function Analyzer() {
           <p className="text-[#475569]">Upload media to detect AI manipulation.</p>
         </div>
 
-        {/* Show result or input */}
-        {result && activeTab === 'crossmodal' ? (
-          <CrossModalResult result={result} onReset={reset} />
-        ) : result && activeTab === 'provenance' ? (
-          <ProvenanceResult result={result} onReset={reset} />
-        ) : result && activeTab === 'batch' ? (
-          <div className="bg-white rounded-2xl border overflow-hidden shadow-lg border-[#E2E8F0] p-8 space-y-6">
-            <div className="flex items-center justify-center text-center p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-              <span className="font-medium text-[#0F172A] text-sm">
-                {result.total_files} files analyzed — <span className="text-[#EF4444] font-bold">{result.fake_detected} FAKE</span> · <span className="text-[#22C55E] font-bold">{result.real_detected} REAL</span>
-              </span>
-            </div>
-            <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#475569]">
-                  <tr>
-                    <th className="px-4 py-3 font-medium w-12 text-center">#</th>
-                    <th className="px-4 py-3 font-medium">Filename</th>
-                    <th className="px-4 py-3 font-medium text-center">Verdict</th>
-                    <th className="px-4 py-3 font-medium text-right">Confidence</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.results?.map((r, i) => {
-                    const isReal = r.prediction === 'REAL';
-                    const isExpanded = expandedBatchRow === i;
-                    return (
-                      <Fragment key={i}>
-                        <tr
-                          onClick={() => setExpandedBatchRow(isExpanded ? null : i)}
-                          className={`border-b border-[#F1F5F9] cursor-pointer hover:bg-[#F8FAFC] transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFBFC]'}`}
-                        >
-                          <td className="px-4 py-3 text-center text-[#94A3B8]">{i + 1}</td>
-                          <td className="px-4 py-3 font-mono text-xs text-[#0F172A] break-all">{r.filename}</td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                              isReal ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#EF4444]/10 text-[#EF4444]'
-                            }`}>
-                              {r.prediction}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right font-medium text-[#2563EB]">
-                            <div className="flex items-center justify-end gap-3">
-                              {r.confidence?.toFixed(1)}%
-                              {isExpanded ? <ChevronUp size={16} className="text-[#94A3B8]" /> : <ChevronDown size={16} className="text-[#94A3B8]" />}
-                            </div>
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
-                            <td colSpan={4} className="p-4">
-                              <div className={`p-4 rounded-xl border-l-4 bg-white shadow-sm flex flex-col md:flex-row gap-6 ${isReal ? 'border-l-[#22C55E]' : 'border-l-[#EF4444]'}`}>
-                                <div className="flex-1 space-y-4">
-                                  <div>
-                                    <p className="text-sm font-semibold text-[#0F172A] mb-1">Analysis Explanation</p>
-                                    <p className="text-sm text-[#475569] leading-relaxed">{r.explanation}</p>
-                                  </div>
-                                  <div className="space-y-1.5 mt-2">
-                                    <div className="flex justify-between text-xs text-[#475569]">
-                                      <span>Confidence</span>
-                                      <span className="font-semibold">{r.confidence?.toFixed(1)}%</span>
-                                    </div>
-                                    <ConfidenceBar value={r.confidence} isReal={isReal} />
-                                  </div>
-                                </div>
-                                {r.heatmap && (
-                                  <div className="shrink-0 space-y-2">
-                                    <p className="text-sm font-semibold text-[#0F172A]">Grad-CAM++ Analysis</p>
-                                    <img
-                                      src={`data:image/png;base64,${r.heatmap}`}
-                                      alt="Grad-CAM++ Analysis"
-                                      className="max-h-[200px] rounded-xl border border-[#E2E8F0] shadow-sm object-contain"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex justify-center pt-2">
-              <button
-                onClick={reset}
-                className="flex items-center gap-2 border border-[#E2E8F0] bg-white text-[#475569] px-6 py-3 rounded-xl text-sm font-semibold hover:bg-[#F8FAFC] transition-all cursor-pointer shadow-sm"
-              >
-                <RotateCcw size={16} />
-                Analyze Another Batch
-              </button>
-            </div>
-          </div>
-        ) : result ? (
-          <ResultCard result={result} file={file} activeTab={activeTab} onReset={reset} />
-        ) : (
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xl shadow-black/[0.03] overflow-hidden">
-            {/* Tabs */}
-            <div className="flex flex-wrap border-b border-[#E2E8F0]">
-              {TABS.map((tab) => {
-                const Icon = tab.icon;
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => { if (!loading) { setActiveTab(tab.id); reset(); } }}
-                    className={`flex-1 min-w-[80px] relative flex items-center justify-center gap-2 py-3 text-xs font-semibold transition-colors ${
-                      loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                    } ${active ? 'text-[#2563EB] bg-blue-50/50' : 'text-[#94A3B8] hover:text-[#475569] hover:bg-[#FAFBFC]'}`}
-                  >
-                    <Icon size={15} />
-                    {tab.label}
-                    {active && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2563EB]" />}
-                  </button>
-                );
-              })}
-            </div>
+          {/* ── Analyzer workspace ── */}
+          {!result ? (
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xl shadow-black/[0.03] overflow-hidden">
+              {/* Tabs */}
+              <div className="flex border-b border-[#E2E8F0]">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        if (!loading) {
+                          setActiveTab(tab.id);
+                          reset();
+                        }
+                      }}
+                      className={`flex-1 relative flex items-center justify-center gap-2.5 py-4 text-sm font-semibold transition-colors ${
+                        loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      } ${
+                        active ? 'text-[#2563EB] bg-blue-50/50' : 'text-[#94A3B8] hover:text-[#475569] hover:bg-[#FAFBFC]'
+                      }`}
+                    >
+                      <Icon size={18} />
+                      {tab.label}
+                      {active && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#2563EB]" />}
+                    </button>
+                  );
+                })}
+              </div>
 
             {/* Input area */}
             <div className="p-6">
@@ -800,30 +713,37 @@ export default function Analyzer() {
               )}
             </div>
 
-            {/* Analyze button */}
-            <div className="px-6 pb-6">
-              <button
-                disabled={!canAnalyze || loading}
-                onClick={handleAnalyze}
-                className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-semibold transition-all ${
-                  canAnalyze && !loading
-                    ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-lg shadow-blue-500/20 cursor-pointer'
-                    : 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed'
-                }`}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    <span>{getLoadingText()}</span>
-                  </>
-                ) : (
-                  'Execute Analysis'
-                )}
-              </button>
+              {/* Analyze button */}
+              <div className="px-6 pb-6">
+                <button
+                  disabled={!canAnalyze || loading}
+                  onClick={handleAnalyze}
+                  className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-semibold transition-all ${
+                    canAnalyze && !loading
+                      ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-lg shadow-blue-500/20 cursor-pointer'
+                      : 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed'
+                  }`}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Analyzing with {activeTab === 'image' ? 'Vision Transformer' : activeTab === 'audio' ? 'wav2vec 2.0' : activeTab === 'video' ? 'Video Processor' : 'RoBERTa'}...</span>
+                    </>
+                  ) : (
+                    'Execute Analysis'
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </main>
+          ) : (
+            <ResultCard
+              result={result}
+              file={file}
+              activeTab={activeTab}
+              onReset={reset}
+            />
+          )}
+        </main>
 
       <footer className="border-t border-[#E2E8F0] bg-white mt-auto py-6">
         <p className="text-center text-sm text-[#94A3B8]">
