@@ -96,13 +96,8 @@ function DropZone({ accept, file, onFile, loading }) {
             </p>
             <p className="text-xs text-[#94A3B8] mt-1">
               {accept.startsWith('image') ? 'JPEG, PNG, WebP up to 10 MB' :
-<<<<<<< HEAD
                 accept.startsWith('video') ? 'MP4, AVI, MOV up to 50 MB' :
                   'WAV, MP3, M4A up to 25 MB'}
-=======
-              accept.startsWith('video') ? 'MP4, AVI, MOV up to 50 MB' :
-              'WAV, MP3, M4A up to 25 MB'}
->>>>>>> a4dfa4e9da36599de92a3d6b995ad0252b83f374
             </p>
           </div>
         </div>
@@ -165,16 +160,9 @@ function ResultCard({ result, file, activeTab, onReset }) {
 
   return (
     <div className="animate-fade-in space-y-6">
-<<<<<<< HEAD
       {/* Main result card */}
       <div className={`bg-white rounded-2xl border overflow-hidden shadow-lg ${isReal ? 'border-[#BBF7D0] shadow-green-500/5' : 'border-[#FECACA] shadow-red-500/5'
         }`}>
-        {/* Status bar */}
-=======
-      <div className={`bg-white rounded-2xl border overflow-hidden shadow-lg ${
-        isReal ? 'border-[#BBF7D0] shadow-green-500/5' : 'border-[#FECACA] shadow-red-500/5'
-      }`}>
->>>>>>> a4dfa4e9da36599de92a3d6b995ad0252b83f374
         <div className={`h-1.5 w-full ${isReal ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
 
         <div className="p-8 space-y-8">
@@ -532,7 +520,6 @@ export default function Analyzer() {
       if (activeTab === "image") {
         const formData = new FormData();
         formData.append("file", file);
-<<<<<<< HEAD
 
         response = await fetch("http://127.0.0.1:8000/detect/image", {
           method: "POST",
@@ -555,24 +542,6 @@ export default function Analyzer() {
           body: formData,
         });
       } else if (activeTab === "text") {
-=======
-        response = await fetch("http://127.0.0.1:8000/detect/image", { method: "POST", body: formData });
-      }
-
-      if (activeTab === "audio") {
-        const formData = new FormData();
-        formData.append("file", file);
-        response = await fetch("http://127.0.0.1:8000/detect/audio", { method: "POST", body: formData });
-      }
-
-      if (activeTab === "video") {
-        const formData = new FormData();
-        formData.append("file", file);
-        response = await fetch("http://127.0.0.1:8000/detect/video", { method: "POST", body: formData });
-      }
-
-      if (activeTab === "text") {
->>>>>>> a4dfa4e9da36599de92a3d6b995ad0252b83f374
         response = await fetch("http://127.0.0.1:8000/detect/text", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -791,7 +760,6 @@ export default function Analyzer() {
                 return (
                   <button
                     key={tab.id}
-<<<<<<< HEAD
                     onClick={() => {
                       if (!loading) {
                         setActiveTab(tab.id);
@@ -801,12 +769,6 @@ export default function Analyzer() {
                     className={`flex-1 relative flex items-center justify-center gap-2.5 py-4 text-sm font-semibold transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       } ${active ? 'text-[#2563EB] bg-blue-50/50' : 'text-[#94A3B8] hover:text-[#475569] hover:bg-[#FAFBFC]'
                       }`}
-=======
-                    onClick={() => { if (!loading) { setActiveTab(tab.id); reset(); } }}
-                    className={`flex-1 min-w-[80px] relative flex items-center justify-center gap-2 py-3 text-xs font-semibold transition-colors ${
-                      loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                    } ${active ? 'text-[#2563EB] bg-blue-50/50' : 'text-[#94A3B8] hover:text-[#475569] hover:bg-[#FAFBFC]'}`}
->>>>>>> a4dfa4e9da36599de92a3d6b995ad0252b83f374
                   >
                     <Icon size={15} />
                     {tab.label}
@@ -819,7 +781,6 @@ export default function Analyzer() {
             {/* Input area */}
             <div className="p-6">
               {activeTab === 'text' ? (
-<<<<<<< HEAD
                 <div className="relative rounded-xl overflow-hidden">
                   <textarea
                     value={text}
@@ -849,15 +810,10 @@ export default function Analyzer() {
                         <p className="text-white text-sm font-semibold tracking-widest uppercase">
                           Analyzer scanning media…
                         </p>
-=======
-                <textarea
-                  value={text}
-                  disabled={loading}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Paste text for AI detection analysis..."
-                  rows={8}
-                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-5 text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#93C5FD] focus:ring-2 focus:ring-blue-500/10 resize-none text-sm leading-relaxed transition-all"
-                />
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : activeTab === 'batch' ? (
                 <div className="flex flex-col gap-4">
                   <div
@@ -886,7 +842,6 @@ export default function Analyzer() {
                         {batchFiles.map((f, i) => (
                           <div key={i} className="py-2 px-3 border-b text-[#475569] last:border-0 truncate font-mono text-xs">{f.name}</div>
                         ))}
->>>>>>> a4dfa4e9da36599de92a3d6b995ad0252b83f374
                       </div>
                     </div>
                   )}
