@@ -45,8 +45,8 @@ function DropZone({ accept, file, onFile, loading }) {
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
       onClick={() => { if (!loading) inputRef.current?.click(); }}
-      className={`relative flex flex-col justify-center items-center min-h-[260px] w-full rounded-xl border-2 border-dashed transition-all duration-200 ${
-        loading ? 'cursor-default opacity-60' : 'cursor-pointer'
+      className={`relative flex flex-col justify-center items-center min-h-[260px] w-full rounded-xl border-2 border-dashed transition-all duration-200 overflow-hidden ${
+        loading ? 'cursor-default' : 'cursor-pointer'
       } ${
         dragOver
           ? 'border-[#2563EB] bg-blue-50/60'
@@ -95,6 +95,32 @@ function DropZone({ accept, file, onFile, loading }) {
           </div>
         </div>
       )}
+      {/* ── Scanning overlay ── */}
+      {loading && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-end pb-7 bg-[#0F172A]/50 rounded-xl">
+          {/* moving scan line */}
+          <div
+            className="scan-line absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#38BDF8] to-transparent"
+            style={{ boxShadow: '0 0 14px 4px #38BDF8', top: 0 }}
+          />
+          {/* label */}
+          <div className="relative z-10 flex flex-col items-center gap-2.5">
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="bounce-dot block w-2 h-2 rounded-full bg-[#38BDF8]"
+                  style={{ animationDelay: `${i * 0.18}s` }}
+                />
+              ))}
+            </div>
+            <p className="text-white text-sm font-semibold tracking-widest uppercase">
+              Analyzer scanning media…
+            </p>
+          </div>
+        </div>
+      )}
+
       <input
         ref={inputRef}
         type="file"
@@ -321,9 +347,7 @@ export default function Analyzer() {
           method: "POST",
           body: formData,
         });
-      }
-
-      if (activeTab === "audio") {
+      } else if (activeTab === "audio") {
         const formData = new FormData();
         formData.append("file", file);
 
@@ -331,9 +355,7 @@ export default function Analyzer() {
           method: "POST",
           body: formData,
         });
-      }
-
-      if (activeTab === "video") {
+      } else if (activeTab === "video") {
         const formData = new FormData();
         formData.append("file", file);
 
@@ -341,9 +363,7 @@ export default function Analyzer() {
           method: "POST",
           body: formData,
         });
-      }
-
-      if (activeTab === "text") {
+      } else if (activeTab === "text") {
         response = await fetch("http://127.0.0.1:8000/detect/text", {
           method: "POST",
           headers: {
@@ -368,9 +388,9 @@ export default function Analyzer() {
     } catch (error) {
       console.error(error);
       alert("Backend connection error");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const reset = () => {
@@ -457,14 +477,39 @@ export default function Analyzer() {
             {/* Input area */}
             <div className="p-6">
               {activeTab === 'text' ? (
-                <textarea
-                  value={text}
-                  disabled={loading}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Paste text for AI detection analysis..."
-                  rows={8}
-                  className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-5 text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#93C5FD] focus:ring-2 focus:ring-blue-500/10 resize-none text-sm leading-relaxed transition-all"
-                />
+                <div className="relative rounded-xl overflow-hidden">
+                  <textarea
+                    value={text}
+                    disabled={loading}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Paste text for AI detection analysis..."
+                    rows={8}
+                    className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-5 text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#93C5FD] focus:ring-2 focus:ring-blue-500/10 resize-none text-sm leading-relaxed transition-all"
+                  />
+
+                  {loading && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-end pb-7 bg-[#0F172A]/50 rounded-xl">
+                      <div
+                        className="scan-line absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#38BDF8] to-transparent"
+                        style={{ boxShadow: '0 0 14px 4px #38BDF8', top: 0 }}
+                      />
+                      <div className="relative z-10 flex flex-col items-center gap-2.5">
+                        <div className="flex gap-1.5">
+                          {[0, 1, 2].map((i) => (
+                            <span
+                              key={i}
+                              className="bounce-dot block w-2 h-2 rounded-full bg-[#38BDF8]"
+                              style={{ animationDelay: `${i * 0.18}s` }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-white text-sm font-semibold tracking-widest uppercase">
+                          Analyzer scanning media…
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <DropZone
                   accept={currentTab.accept}
