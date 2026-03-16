@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import logo from '../assets/download.png';
 import {
   Shield,
   Upload,
@@ -45,15 +46,15 @@ function DropZone({ accept, file, onFile, loading }) {
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
       onClick={() => { if (!loading) inputRef.current?.click(); }}
-      className={`relative flex flex-col justify-center items-center min-h-[260px] w-full rounded-xl border-2 border-dashed transition-all duration-200 overflow-hidden ${
-        loading ? 'cursor-default' : 'cursor-pointer'
-      } ${
-        dragOver
+        className={`relative flex flex-col justify-center items-center min-h-[260px] w-full rounded-xl border-2 border-dashed transition-all duration-200 overflow-hidden ${
+          loading ? 'cursor-default opacity-60' : 'cursor-pointer'
+        } ${
+          dragOver
           ? 'border-[#2563EB] bg-blue-50/60'
           : file
-          ? 'border-[#CBD5E1] bg-[#F8FAFC]'
-          : 'border-[#CBD5E1] bg-[#FAFBFC] hover:border-[#93C5FD] hover:bg-blue-50/30'
-      }`}
+            ? 'border-[#CBD5E1] bg-[#F8FAFC]'
+            : 'border-[#CBD5E1] bg-[#FAFBFC] hover:border-[#93C5FD] hover:bg-blue-50/30'
+        }`}
     >
       {file ? (
         <div className="flex flex-col items-center gap-4 p-6">
@@ -89,8 +90,8 @@ function DropZone({ accept, file, onFile, loading }) {
             </p>
             <p className="text-xs text-[#94A3B8] mt-1">
               {accept.startsWith('image') ? 'JPEG, PNG, WebP up to 10 MB' :
-               accept.startsWith('video') ? 'MP4, AVI, MOV up to 50 MB' :
-               'WAV, MP3, M4A up to 25 MB'}
+                accept.startsWith('video') ? 'MP4, AVI, MOV up to 50 MB' :
+                  'WAV, MP3, M4A up to 25 MB'}
             </p>
           </div>
         </div>
@@ -139,9 +140,8 @@ function ConfidenceBar({ value, isReal }) {
   return (
     <div className="w-full h-3 rounded-full bg-[#F1F5F9] overflow-hidden">
       <div
-        className={`h-full rounded-full transition-all duration-1000 ease-out ${
-          isReal ? 'bg-[#22C55E]' : 'bg-[#EF4444]'
-        }`}
+        className={`h-full rounded-full transition-all duration-1000 ease-out ${isReal ? 'bg-[#22C55E]' : 'bg-[#EF4444]'
+          }`}
         style={{ width: `${clamped}%` }}
       />
     </div>
@@ -155,9 +155,8 @@ function ResultCard({ result, file, activeTab, onReset }) {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Main result card */}
-      <div className={`bg-white rounded-2xl border overflow-hidden shadow-lg ${
-        isReal ? 'border-[#BBF7D0] shadow-green-500/5' : 'border-[#FECACA] shadow-red-500/5'
-      }`}>
+      <div className={`bg-white rounded-2xl border overflow-hidden shadow-lg ${isReal ? 'border-[#BBF7D0] shadow-green-500/5' : 'border-[#FECACA] shadow-red-500/5'
+        }`}>
         {/* Status bar */}
         <div className={`h-1.5 w-full ${isReal ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
 
@@ -165,9 +164,8 @@ function ResultCard({ result, file, activeTab, onReset }) {
           {/* Verdict */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-6 border-b border-[#F1F5F9]">
             <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                isReal ? 'bg-[#22C55E]/10' : 'bg-[#EF4444]/10'
-              }`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isReal ? 'bg-[#22C55E]/10' : 'bg-[#EF4444]/10'
+                }`}>
                 {isReal ? (
                   <CheckCircle2 size={28} className="text-[#22C55E]" />
                 ) : (
@@ -181,9 +179,8 @@ function ResultCard({ result, file, activeTab, onReset }) {
                 <p className="text-xs text-[#94A3B8] mt-1">Processed in &lt;2s · Model: ViT-Base</p>
               </div>
             </div>
-            <span className={`text-xs font-semibold px-4 py-2 rounded-full ${
-              isReal ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#EF4444]/10 text-[#EF4444]'
-            }`}>
+            <span className={`text-xs font-semibold px-4 py-2 rounded-full ${isReal ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#EF4444]/10 text-[#EF4444]'
+              }`}>
               {isReal ? 'AUTHENTIC' : 'HIGH RISK'}
             </span>
           </div>
@@ -201,9 +198,8 @@ function ResultCard({ result, file, activeTab, onReset }) {
 
           {/* Explanation */}
           {result.explanation && (
-            <div className={`p-4 rounded-xl border-l-4 bg-[#F8FAFC] ${
-              isReal ? 'border-l-[#22C55E]' : 'border-l-[#EF4444]'
-            }`}>
+            <div className={`p-4 rounded-xl border-l-4 bg-[#F8FAFC] ${isReal ? 'border-l-[#22C55E]' : 'border-l-[#EF4444]'
+              }`}>
               <p className="text-sm text-[#475569] leading-relaxed">
                 <span className={`font-semibold ${isReal ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {isReal ? '✓ ' : '⚠ '}
@@ -251,9 +247,8 @@ function ResultCard({ result, file, activeTab, onReset }) {
                 <FileSearch size={16} className="text-[#475569]" />
                 <h3 className="text-sm font-semibold text-[#0F172A]">Textual Analysis</h3>
               </div>
-              <div className={`p-4 rounded-xl border text-sm leading-relaxed ${
-                isReal ? 'bg-green-50/50 border-[#BBF7D0] text-[#166534]' : 'bg-red-50/50 border-[#FECACA] text-[#991B1B]'
-              }`}>
+              <div className={`p-4 rounded-xl border text-sm leading-relaxed ${isReal ? 'bg-green-50/50 border-[#BBF7D0] text-[#166534]' : 'bg-red-50/50 border-[#FECACA] text-[#991B1B]'
+                }`}>
                 Analysis complete. {isReal ? 'No structural anomalies detected.' : 'AI generation patterns detected in text.'}
               </div>
             </div>
@@ -418,9 +413,7 @@ export default function Analyzer() {
             </Link>
             <div className="h-6 w-px bg-[#E2E8F0]" />
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center">
-                <Shield size={16} className="text-white" />
-              </div>
+              <img src={logo} alt="Hologram Truth Analyzer" className="h-16 w-16 rounded-lg object-cover" />
               <span className="font-bold text-[15px] tracking-tight">Hologram Truth Analyzer</span>
             </div>
           </div>
@@ -460,11 +453,9 @@ export default function Analyzer() {
                         reset();
                       }
                     }}
-                    className={`flex-1 relative flex items-center justify-center gap-2.5 py-4 text-sm font-semibold transition-colors ${
-                      loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                    } ${
-                      active ? 'text-[#2563EB] bg-blue-50/50' : 'text-[#94A3B8] hover:text-[#475569] hover:bg-[#FAFBFC]'
-                    }`}
+                    className={`flex-1 relative flex items-center justify-center gap-2.5 py-4 text-sm font-semibold transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      } ${active ? 'text-[#2563EB] bg-blue-50/50' : 'text-[#94A3B8] hover:text-[#475569] hover:bg-[#FAFBFC]'
+                      }`}
                   >
                     <Icon size={18} />
                     {tab.label}
@@ -525,11 +516,10 @@ export default function Analyzer() {
               <button
                 disabled={!canAnalyze || loading}
                 onClick={handleAnalyze}
-                className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-semibold transition-all ${
-                  canAnalyze && !loading
-                    ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-lg shadow-blue-500/20 cursor-pointer'
-                    : 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed'
-                }`}
+                className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-semibold transition-all ${canAnalyze && !loading
+                  ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-lg shadow-blue-500/20 cursor-pointer'
+                  : 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed'
+                  }`}
               >
                 {loading ? (
                   <>

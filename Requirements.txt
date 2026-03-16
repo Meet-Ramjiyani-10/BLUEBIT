@@ -5,27 +5,27 @@ python-multipart==0.0.9
 
 # ML & Deep Learning
 torch>=2.2
-torchvision==0.17.1
-torchaudio==2.2.1
-transformers==4.39.3
-timm==0.9.16
+torchvision>=0.17
+torchaudio>=2.2
+transformers>=4.39
+timm>=0.9
 
 
 # Image Processing
-Pillow==10.3.0
-opencv-python==4.9.0.80
-numpy==1.26.4
+Pillow>=10.3
+opencv-python>=4.9
+numpy>=1.26
 
 # Audio Processing
-librosa==0.10.1
-soundfile==0.12.1
+librosa>=0.10
+soundfile>=0.12
 
 # Explainability
-grad-cam==1.4.8
-shap==0.45.0
+grad-cam>=1.4
+shap>=0.45
 
 # Utilities
-python-dotenv==1.0.1
-pydantic==2.6.4
-requests==2.31.0
+python-dotenv>=1.0
+pydantic>=2.6
+requests>=2.31
 tqdm==4.66.2
